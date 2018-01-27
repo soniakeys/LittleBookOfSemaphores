@@ -1,0 +1,37 @@
+# 3.5 Multiplex
+
+I can't but rant here.  Multiple threads in the critical section?  Um, we call
+that a race condition.  It's not a pattern, it's a bug.  Multiple people in a
+nightclub?  Don't let your drink be a shared resource.  You do not want
+multple people accessing it.
+
+## chanSem.go
+
+For fun, let's try it!
+
+----
+$ go run -race chanSem.go
+==================
+WARNING: DATA RACE
+Read at 0x0000005b9e00 by goroutine 6:
+  main.inc()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.5-Multiplex/chanSem.go:14 +0x58
+
+Previous write at 0x0000005b9e00 by goroutine 70:
+  main.inc()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.5-Multiplex/chanSem.go:14 +0x74
+
+Goroutine 6 (running) created at:
+  main.main()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.5-Multiplex/chanSem.go:27 +0x92
+
+Goroutine 70 (running) created at:
+  main.main()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.5-Multiplex/chanSem.go:27 +0x92
+==================
+count: 4999
+Found 1 data race(s)
+exit status 66
+----
+
+Bad idea.  Just don't.
