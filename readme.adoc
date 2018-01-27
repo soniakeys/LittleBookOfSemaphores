@@ -1,0 +1,31 @@
+# A Go Take on "Little Book of Semaphores"
+
+## Preface
+
+Why?!! some would cry.  Go has wonderful concurrency support, quite deliberately omitting semaphores.  Why try to pound square pegs into round holes?
+
+My first answer is that the book has tons of exercises that look fun, interesting, and challenging.  These drew me in when I first found this book.  I tried my hand at a few of them, had some fun, but soon grew frustrated at assumptions that seemed baked into the book's solutions.  I had to set it aside for a while.
+
+Another answer is that it is in fact possible to implement semaphores in Go, just as the book describes, and therefore implement the solutions provided in the book, just as presented.  A technical feat perhaps, but far from idiomatic Go.
+
+So then, given one of these semaphore-based solutions in Go, how can it be simplified?  Is there a drop-in Go language or standard library replacement for a given semaphore-based technique?
+
+When simplifications run into assumptions, things get squishy.  Is it fair to change he problem?  In the interest of doing something interesting with concurrency, I think so.
+
+Finally, I think a lot of these problems get more interesting when incorporated into some sort of a simulation.  The book typically stops short of specifying such a simulation.  I find them enlightening and satisfying though and have some fun wrting them.  More often than not, the exercise of writing a simulation points out yet more tacit assumptions of the original problem description.  Often assumptions about the physical world, or of agency or sentience of actors involved.
+
+## Organization
+
+This is a git repo, a directory tree of files consisting of some runnable code and some documentation.  The documentation is often text in AsciiDoc format (like this readme) and might offer a wide range of comments on why the code is written the way it is, or occassionally just comments on something from the book.
+
+The naming and structure of the directory tree generally follows the chapters and sections of the book.  There is just one importable Go package, "sem", at the top of the directory tree.  Otherwise code is all runnable programs, with each program in a separate directory.
+
+## Status
+
+January, 2018, I'm just putting up the first content.  I have a little start on it, I have a number of these problems that I've toyed with in the past but long since lost my code.  It will be a work in progress.
+
+## See Also
+
+Other gophers have tried this before me!
+
+Try a search like https://github.com/search?l=Go&q=little+book+of+semaphores&type=Repositories&utf8=%E2%9C%93 for example.
