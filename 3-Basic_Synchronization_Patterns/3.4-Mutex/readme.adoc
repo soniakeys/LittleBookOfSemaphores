@@ -1,0 +1,23 @@
+# 3.4 Mutex
+
+Mutexes, we got.  Anyway, let's play along for a bit.
+
+## chanSem.go
+
+Here's the literal implementation of the solution from the book.  Note the
+semaphore initialized to 1 rather than 0.
+
+## countSem.go
+
+The literal implementation again, this time with CountSem from our package,
+demonstrating initialization of CountSem to something greater than zero.
+
+## mutex.go
+
+Let's use the Go sync.Mutex.  It's a drop-in for the semaphore, without
+having to think about an initial count value.
+
+## atomic.go
+
+Really, if you just want to increment a shared count?  sync/atomic is the way
+to go.  No mutex needed.
