@@ -15,13 +15,11 @@ whatever other synchronization problem we were solving.
 
 The solution code shows a line
 
-[source]
-# rendezvous
+  \# rendezvous
 
 and a line
 
-[source]
-# critical point
+  \# critical point
 
 But this is no more than was in the Barrier example.  What are we showing
 that is new?  Apparently this trick of counting up and then counting down.
