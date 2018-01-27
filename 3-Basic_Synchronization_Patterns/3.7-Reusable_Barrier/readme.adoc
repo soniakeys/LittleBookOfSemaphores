@@ -15,11 +15,11 @@ whatever other synchronization problem we were solving.
 
 The solution code shows a line
 
-    # rendezvous
+`# rendezvous`
 
 and a line
 
-    # critical point
+`# critical point`
 
 But this is no more than was in the Barrier example.  What are we showing
 that is new?  Apparently this trick of counting up and then counting down.
@@ -96,7 +96,6 @@ a closed channel.  Channels are super cheap to create though.  No need to
 reuse, just re-make the channel.  The last trick is to use one more channel,
 cycleReset, as the final barrier of a cycle.
 
-[source]
 ----
 $ go run workerLoop.go
 2018/01/27 16:46:14 cycle 0
