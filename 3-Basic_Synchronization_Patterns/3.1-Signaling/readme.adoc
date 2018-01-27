@@ -1,0 +1,11 @@
+# 3.1 Signaling Pattern
+
+First a little note, where LBS says "thread", of course in Go we read
+"goroutine".
+
+We use the example from the book to exercise our two semaphore implementations.
+chanSem.go implements the example with a sem.ChanSem, countSem implements the
+example with a sem.CountSem.
+
+Then chan.go shows that a Go unbuffered channel accomplishes the signaling
+pattern as a simple replacement for the semaphore.
