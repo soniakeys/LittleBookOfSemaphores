@@ -1,0 +1,83 @@
+# 3.6 Barrier
+
+Quoting from the book,  "Every thread should run the following code:"
+
+.Barrier code
+----
+rendezvous
+critical point
+----
+
+It's a little unclear what these two lines are supposed to be.  Are they
+referencing some specific already-introduced code implementing rendezvous and
+critical point?  Are they function names for functions that might do some
+arbitrary application-specific task?  Are they just general concepts?
+
+I'm going to implement them as print statements, just indicating that some
+code is being excecuted.
+
+## chanSem.go
+
+This is more or less the literal interpretation.  One liberty I took was using
+atomic for the count.  The mutex protected count didn't seem part of the
+problem, and also atomic nicely avoids the sketchy racey code where count
+is tested outside of the mutex.
+
+Output from an example run:
+
+----
+$ go run -race chanSem.go
+2018/01/27 13:23:43 gr 0 rendezvous
+2018/01/27 13:23:43 gr 3 rendezvous
+2018/01/27 13:23:43 gr 2 rendezvous
+2018/01/27 13:23:43 gr 1 rendezvous
+2018/01/27 13:23:43 gr 4 rendezvous
+2018/01/27 13:23:43 gr 0 critical point
+2018/01/27 13:23:43 gr 2 critical point
+2018/01/27 13:23:43 gr 3 critical point
+2018/01/27 13:23:43 gr 1 critical point
+2018/01/27 13:23:43 gr 4 critical point
+----
+
+All goroutines execute their "rendezvous" code, wait for each other, then
+execute their "critical point" code.
+
+This use of words rendezvous and critical point still seems confusing.  How
+about instead "before barrier" and "after barrier".
+
+## close.go
+
+Here's a significant departure from the book solution, but one I think still
+captures the idea of a barrier.  Instead of maintaining a count and relying
+on one of the goroutines to recognize that it is last, it uses a WaitGroup
+to let a supervisory goroutine (main) wait for all of the worker goroutines
+to finish their before-barrier work.
+
+Main then uses a Go idiom for broadcasting a signal -- it closes a channel.
+Closing a channel in Go causes it to thereafter send a zero value of the
+channel type in response to any number of receive requests.  Main creates
+this channel and leaves it empty.  Then at the "barrier", workers all block
+trying to recieve from the empty channel.  Main waits for the WaitGroup
+signalling all workers are at the barrier, then closes the channel.
+All workers then succeed at getting a zero value from the channel and
+proceed to their after-barrier work.
+
+Note that a couple of contrivences of the book solution are not needed here.
+There is no explicit count, just that maintained by the WaitGroup.  One
+worker does not have to take up a supervisory role.  And there is no
+"turnstile" needed.  The channel close idiom effectively releases all workers
+at once.
+
+----
+$ go run -race close.go
+2018/01/27 14:00:06 gr 0 rendezvous (before barrier)
+2018/01/27 14:00:06 gr 3 rendezvous (before barrier)
+2018/01/27 14:00:06 gr 1 rendezvous (before barrier)
+2018/01/27 14:00:06 gr 2 rendezvous (before barrier)
+2018/01/27 14:00:06 gr 4 rendezvous (before barrier)
+2018/01/27 14:00:06 gr 1 critical point (after barrier)
+2018/01/27 14:00:06 gr 4 critical point (after barrier)
+2018/01/27 14:00:06 gr 0 critical point (after barrier)
+2018/01/27 14:00:06 gr 2 critical point (after barrier)
+2018/01/27 14:00:06 gr 3 critical point (after barrier)
+----
