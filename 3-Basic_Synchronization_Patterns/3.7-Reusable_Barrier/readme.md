@@ -96,7 +96,9 @@ a closed channel.  Channels are super cheap to create though.  No need to
 reuse, just re-make the channel.  The last trick is to use one more channel,
 cycleReset, as the final barrier of a cycle.
 
+[source]
 ----
+$ go run workerLoop.go
 2018/01/27 16:46:14 cycle 0
 2018/01/27 16:46:14   gr 0 working
 2018/01/27 16:46:14   gr 1 working
