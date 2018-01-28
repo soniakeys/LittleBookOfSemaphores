@@ -1,0 +1,84 @@
+# 3.8 Queue
+
+I must confess I don't understand this section at all.  A queue is a data
+structure that holds data.  Each element in the queue is a data item with
+some kind of value.  A semaphore is just a number.  It can represent the
+current size of a queue, but not the data of the queue.  I just don't see
+where anything in this section is addressing a queue as a data structure.
+
+Regardless, the dance example might make for a fun simulation.  Can we ignore
+the code examples of this chapter and try to come up with a simulation?
+
+## dance.go
+
+We run the simulation for one second, allowing leaders and followers to arrive
+at random intervals.  The select statement does a nice thing for us,
+serializing events.  It's as if there is a single door and either a leader
+may enter or a follower may enter or the door may close, ending the dance.
+This serialization means we can use the scheme described in the book where
+a new arrival can look to see if a partner is waiting and if so dance,
+otherwise queue to wait.  The two queues are the queues of goroutines waiting
+to send on either the leaders or followers channels.  The channels maintain
+these queues.
+
+----
+$ go run -race dance.go
+2018/01/27 21:27:29 leader 1 arrives
+2018/01/27 21:27:29 leader 2 arrives
+2018/01/27 21:27:29 follower 1 arrives
+2018/01/27 21:27:29 leader 1 follower 1 dance
+2018/01/27 21:27:29 leader 3 arrives
+2018/01/27 21:27:29 leader 4 arrives
+2018/01/27 21:27:29 follower 2 arrives
+2018/01/27 21:27:29 leader 2 follower 2 dance
+2018/01/27 21:27:29 follower 3 arrives
+2018/01/27 21:27:29 leader 3 follower 3 dance
+2018/01/27 21:27:29 leader 5 arrives
+2018/01/27 21:27:29 follower 4 arrives
+2018/01/27 21:27:29 leader 4 follower 4 dance
+2018/01/27 21:27:29 follower 5 arrives
+2018/01/27 21:27:29 leader 5 follower 5 dance
+2018/01/27 21:27:30 leader 6 arrives
+2018/01/27 21:27:30 follower 6 arrives
+2018/01/27 21:27:30 leader 6 follower 6 dance
+2018/01/27 21:27:30 follower 7 arrives
+2018/01/27 21:27:30 follower 8 arrives
+2018/01/27 21:27:30 dance ends
+----
+
+## exclusive.go
+
+I coded a little simulation for this too.  I hope you won't be disappointed
+that it uses no concurrency, no timers, and no queues.  I know, it's supposed
+to be a section on queues, but there doesn't seem to be any application for
+queues in this problem.
+
+The requirement is that dancers have designated partners ("the one that
+brought you").  That kind of implies they arrive together.  If they dance as
+soon as they arrive, there's no interesting problem.  So let's say they want
+to mingle for a time first, then at some point they -- individually -- become
+ready to dance.  We can model this with a permutation of the dancers,
+representing the order they become ready to dance.  If their designated
+partner is not ready yet, they enter a pool of people ready to dance.  A
+"set" data structure will do for this.  No queue needed.  On the other hand
+if their partner is waiting in the "ready" set, they dance.  One pass through
+the permutation and everybody dances eventually.
+
+----
+$ go run exclusive.go
+follower 2 ready
+follower 3 ready
+leader 2 ready
+pair 2 dances
+leader 4 ready
+leader 0 ready
+leader 3 ready
+pair 3 dances
+follower 4 ready
+pair 4 dances
+follower 1 ready
+leader 1 ready
+pair 1 dances
+follower 0 ready
+pair 0 dances
+----
