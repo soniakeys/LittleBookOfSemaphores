@@ -1,0 +1,62 @@
+# 4.1 Producer-consumer
+
+## chanSem.go
+
+In my semaphor-based implementation, I started with a cut and paste from the
+book solution and tried to modify it minimally.  In my interpretation, I start
+a producer goroutine for each event.  A producer goroutine gets a single event, buffers it, and then terminates.  For the consumer code though, I added a loop.
+One or more consumer goroutines can be started.  They run continuously and all
+consume from the single buffer.  The print statements are just to make a nice
+simulation.
+
+----
+$ go run chanSem.go
+2018/01/28 22:47:10 producer 6 produces event 1
+2018/01/28 22:47:10   consumer 2 gets event 1
+2018/01/28 22:47:10     processed: event 1
+2018/01/28 22:47:10 producer 3 produces event 2
+2018/01/28 22:47:10 producer 5 produces event 6
+2018/01/28 22:47:10   consumer 1 gets event 2
+2018/01/28 22:47:10     processed: event 2
+2018/01/28 22:47:10 producer 4 produces event 5
+2018/01/28 22:47:10   consumer 1 gets event 5
+2018/01/28 22:47:10   consumer 2 gets event 6
+2018/01/28 22:47:10     processed: event 6
+2018/01/28 22:47:10 producer 1 produces event 3
+2018/01/28 22:47:10   consumer 2 gets event 3
+2018/01/28 22:47:10     processed: event 3
+2018/01/28 22:47:10 producer 2 produces event 4
+2018/01/28 22:47:10   consumer 2 gets event 4
+2018/01/28 22:47:10     processed: event 4
+2018/01/28 22:47:10     processed: event 5
+----
+
+## chan.go
+
+The items semaphore and mutex protected buffer implementation get replaced
+with a simple unbuffered channel.  This works as long as we stick with the
+plan of running a producer goroutine for each event.  The producers can
+block on the channel send and get queued up by the channel.  This internal
+queue is effectively the buffer.
+
+----
+$ go run chan.go
+2018/01/28 22:52:21 producer 6 produces event 1
+2018/01/28 22:52:21   consumer 2 gets event 1
+2018/01/28 22:52:21     processed: event 1
+2018/01/28 22:52:21 producer 4 produces event 3
+2018/01/28 22:52:21 producer 2 produces event 2
+2018/01/28 22:52:21   consumer 2 gets event 2
+2018/01/28 22:52:21     processed: event 2
+2018/01/28 22:52:21 producer 3 produces event 4
+2018/01/28 22:52:21   consumer 2 gets event 4
+2018/01/28 22:52:21     processed: event 4
+2018/01/28 22:52:21 producer 5 produces event 6
+2018/01/28 22:52:21   consumer 2 gets event 6
+2018/01/28 22:52:21     processed: event 6
+2018/01/28 22:52:21 producer 1 produces event 5
+2018/01/28 22:52:21   consumer 1 gets event 3
+2018/01/28 22:52:21   consumer 2 gets event 5
+2018/01/28 22:52:21     processed: event 5
+2018/01/28 22:52:21     processed: event 3
+----
