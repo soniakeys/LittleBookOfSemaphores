@@ -59,7 +59,7 @@ source file called `chanSem.go`.
 Other implmentations will have somewhate descriptive file names.
 
 The readme for each section will have a heading for each program in the
-directory, saying something about it and giving example out.  Code is not
+directory, saying something about it and giving example output.  Code is not
 generally copied or quoted in the readme; the code is right there in the repo.
 
 Downey typically gives a list of syncronization variables as his "hint" for
