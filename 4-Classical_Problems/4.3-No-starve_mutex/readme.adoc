@@ -1,0 +1,99 @@
+# 4.3 No-starve mutex
+
+As usual I wrote little toy simulations exercising the code.  The simulations
+run and show the program working.  Unsatisfyingly though, they don't
+demonstrate much about the advertised no-starve property.  I think this would
+take a more carefully constructed test, maybe one that would attempt to
+saturate the scheduler, then introduce a few test goroutines that could be
+followed, and show that they are scheduled in some reasonable amount of time
+even while the saturation goroutines were continuing to be started.  It's
+beyond the scope of what I'm trying do do here.
+
+## chanSem.go
+
+----
+$ go run chanSem.go
+gr 5 runs
+gr 7 runs
+gr 6 runs
+gr 10 runs
+gr 9 runs
+gr 2 runs
+gr 1 runs
+gr 3 runs
+gr 4 runs
+gr 8 runs
+----
+
+## goSched.go
+
+A quick search of the go-nuts mailing list returned this informative message
+from Ian Lance Taylor,
+
+____
+On Thu, Jun 16, 2016 at 11:27 AM, Dmitry Orlov 
+<dmitry...@mixpanel.com> wrote: 
+> 
+> I am curious how does goroutine scheduler picks what goroutine to run, among 
+> several runnable. Does it optimize for fairness in any way? 
+
+The current scheduler does not optimize for fairness.  Of course, the 
+scheduler has changed in the past and it will change in the future. 
+
+The current scheduler (approximately) associates goroutines with 
+threads.  When a thread has to choose a new goroutine to run, it will 
+preferentially choose one of its associated goroutines.  If it doesn't 
+have any ready to run, it will steal one from another thread. 
+
+
+> I ran a quick experiment and found out that goroutines that run for longer 
+> intervals between yield points receive proportionally larger CPU share. 
+
+Yes, that is what I would have guessed from the current scheduler. 
+
+
+> Does this test expose the scheduler's cpu policy correctly, or it is biased? 
+> What is the best reading about scheduler's policies? 
+
+The comment at the top of runtime/proc.go and https://golang.org/s/go11sched. 
+
+
+It's a more or less understood design goal that the goroutine 
+scheduler is optimized for network servers, where each goroutine 
+typically does some relatively small amount of work followed by 
+network or disk I/O.  The scheduler is not optimized for goroutines 
+that do a lengthy CPU-bound computation.  We leave the kernel 
+scheduler to handle those, and we expect that programs will set 
+GOMAXPROCS to a value larger than the number of lengthy CPU-bound 
+computations they expect to run in parallel.  While I'm sure we'd all 
+be happy to see the scheduler do a better job of handling CPU-bound 
+goroutines, that would only be acceptable if there were no noticeable 
+cost to the normal case of I/O-bound goroutines. 
+
+Ian
+____
+
+The a peek at the comment at the top of runtime/proc.go shows that as of this
+writing, January 2018, the current scheduler is the one described in the cited
+design document, go11sched.
+
+Anyway, the toy simulation with the bare Go scheduler:
+
+----
+$ go run goSched.go
+2018/01/30 13:24:43 gr 7 runs
+2018/01/30 13:24:43 gr 1 runs
+2018/01/30 13:24:43 gr 2 runs
+2018/01/30 13:24:43 gr 6 runs
+2018/01/30 13:24:43 gr 3 runs
+2018/01/30 13:24:43 gr 9 runs
+2018/01/30 13:24:43 gr 10 runs
+2018/01/30 13:24:43 gr 4 runs
+2018/01/30 13:24:43 gr 5 runs
+2018/01/30 13:24:43 gr 8 runs
+----
+
+Wait, was there a mutex there?  Well, yes, it's not clear, even from the docs,
+but the log.Println holds a mutex to write to stdout.  This keeps log messages
+from getting interleaved, which perhaps surprisingly there are otherwise no
+guarantees against.
