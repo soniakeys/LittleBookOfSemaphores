@@ -12,9 +12,10 @@ var (
 	readSwitch = sem.NewLightswitch()
 	roomEmpty  = sem.NewChanSem(1, 1)
 	turnstile  = sem.NewChanSem(1, 1)
-	b          bytes.Buffer
-	wg         sync.WaitGroup
+	b          bytes.Buffer // protected by roomEmpty
 )
+
+var wg sync.WaitGroup
 
 func writer(nw int) {
 	turnstile.Wait()

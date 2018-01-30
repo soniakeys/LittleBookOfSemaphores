@@ -8,6 +8,12 @@ import (
 	"github.com/soniakeys/LittleBookOfSemaphores/sem"
 )
 
+var (
+	mutex  sem.ChanSem
+	items  sem.ChanSem
+	buffer eventBuffer // not in hint, but this is what mutex protects
+)
+
 func producer(np int) {
 	event := WaitForEvent()
 	log.Println("producer", np, "produces event", event)
@@ -28,13 +34,8 @@ func consumer(nc int) {
 	}
 }
 
-var (
-	last   int64 // last event number
-	mutex  sem.ChanSem
-	items  sem.ChanSem
-	buffer eventBuffer
-	wg     sync.WaitGroup
-)
+var last int64 // last event number generated
+var wg sync.WaitGroup
 
 type event64 int64
 

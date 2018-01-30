@@ -12,9 +12,10 @@ var (
 	readers   = 0
 	mutex     = sem.NewChanSem(1, 1)
 	roomEmpty = sem.NewChanSem(1, 1)
-	b         bytes.Buffer
-	wg        sync.WaitGroup
+	b         bytes.Buffer // protected by mutex
 )
+
+var wg sync.WaitGroup
 
 func writer(nw int) {
 	roomEmpty.Wait()

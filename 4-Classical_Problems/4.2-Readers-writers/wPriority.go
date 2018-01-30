@@ -13,9 +13,10 @@ var (
 	writeSwitch = sem.NewLightswitch()
 	noReaders   = sem.NewChanSem(1, 1)
 	noWriters   = sem.NewChanSem(1, 1)
-	b           bytes.Buffer
-	wg          sync.WaitGroup
+	b           bytes.Buffer // protected by noWriters
 )
+
+var wg sync.WaitGroup
 
 func writer(nw int) {
 	writeSwitch.Lock(noReaders)
