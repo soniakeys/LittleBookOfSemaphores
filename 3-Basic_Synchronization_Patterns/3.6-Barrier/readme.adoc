@@ -18,15 +18,12 @@ code is being excecuted.
 
 ## chanSem.go
 
-This is more or less the literal interpretation.  One liberty I took was using
-atomic for the count.  The mutex protected count didn't seem part of the
-problem, and also atomic nicely avoids the sketchy racey code where count
-is tested outside of the mutex.
+This is the literal interpretation.
 
 Output from an example run:
 
 ----
-$ go run -race chanSem.go
+$ go run chanSem.go
 2018/01/27 13:23:43 gr 0 rendezvous
 2018/01/27 13:23:43 gr 3 rendezvous
 2018/01/27 13:23:43 gr 2 rendezvous
@@ -45,13 +42,67 @@ execute their "critical point" code.
 This use of words rendezvous and critical point still seems confusing.  How
 about instead "before barrier" and "after barrier".
 
+Much more disturbing though is the note in the text,
+
+____
+It might seem dangerous to read the value of count outside the mutex. In
+this case it is not a problem, but in general it is probably not a good idea.
+____
+
+It does seem dangerous.  What does the Go race detector think?
+
+----
+$ go run -race chanSem.go
+2018/01/30 14:59:15 gr 0 rendezvous
+2018/01/30 14:59:15 gr 1 rendezvous
+==================
+2018/01/30 14:59:15 gr 2 rendezvous
+WARNING: DATA RACE
+Write at 0x0000005d1140 by goroutine 7:
+  main.gr()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:22 +0x166
+
+Previous read at 0x0000005d1140 by goroutine 6:
+  main.gr()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:24 +0x1c4
+
+Goroutine 7 (running) created at:
+2018/01/30 14:59:15 gr 3 rendezvous
+  main.main()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:36 +0xa2
+
+Goroutine 6 (running) created at:
+  main.main()
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:36 +0xa2
+==================
+2018/01/30 14:59:15 gr 4 rendezvous
+2018/01/30 14:59:15 gr 0 critical point
+2018/01/30 14:59:15 gr 1 critical point
+2018/01/30 14:59:15 gr 2 critical point
+2018/01/30 14:59:15 gr 3 critical point
+2018/01/30 14:59:15 gr 4 critical point
+Found 1 data race(s)
+exit status 66
+----
+
+Why read the value of count outside the mutex?  I don't know.  I tried putting
+it inside the mutex and the program seems to work okay and keep the race
+detector happy.
+
+## atomic.go
+
+Here's a variant of mine still using the barrier semaphore but using Go's
+sync/atomic for the count.  The mutex protected count didn't seem part of the
+problem, and also atomic nicely avoids the sketchy racey code where count
+is tested outside of the mutex.
+
 ## close.go
 
-Here's a significant departure from the book solution, but one I think still
-captures the idea of a barrier.  Instead of maintaining a count and relying
-on one of the goroutines to recognize that it is last, it uses a WaitGroup
-to let a supervisory goroutine (main) wait for all of the worker goroutines
-to finish their before-barrier work.
+A version without semaphores.  It's a significant departure from the book
+solution, but one I think still captures the idea of a barrier.  Instead of
+maintaining a count and relying on one of the goroutines to recognize that it
+is last, it uses a WaitGroup to let a supervisory goroutine (main) wait for all
+of the worker goroutines to finish their before-barrier work.
 
 Main then uses a Go idiom for broadcasting a signal -- it closes a channel.
 Closing a channel in Go causes it to thereafter send a zero value of the
