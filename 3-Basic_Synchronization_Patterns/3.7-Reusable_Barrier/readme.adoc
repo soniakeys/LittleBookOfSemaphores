@@ -2,12 +2,12 @@
 
 Oh, this section seems a mess to me.  The situation first presented is that
 of a barrier inside a loop, but then the whole loop thing is never mentioned
-again.  Then the puzzle is about this turnstile that I earlier dismissed as a
-contrivance.
+again.
 
-## Book solution
+## chanSem.go
 
-There's so much that makes me squirm here I'm not even going to implement it.
+This is the literal implementation of section 3.7.5.
+
 The text talks about a two-phase barrier, but haven't we been needing to do
 this all along?  We needed in a number of programs so far to use a WaitGroup
 to wait for all goroutines to complete before exiting main, in addition to
@@ -22,9 +22,42 @@ and a line
 `# critical point`
 
 But this is no more than was in the Barrier example.  What are we showing
-that is new?  Apparently this trick of counting up and then counting down.
+that is new?  Apparently this trick of counting up and then counting down
+which makes for two phases.  That doesn't seem to solve the loop problem
+in general.
 
-Enough.
+----
+$ go run -race chanSem.go
+2018/01/30 17:06:09 gr 1 rendezvous
+2018/01/30 17:06:09 gr 4 rendezvous
+2018/01/30 17:06:09 gr 3 rendezvous
+2018/01/30 17:06:09 gr 2 rendezvous
+2018/01/30 17:06:09 gr 5 rendezvous
+2018/01/30 17:06:09 gr 1 critical point
+2018/01/30 17:06:09 gr 4 critical point
+2018/01/30 17:06:09 gr 3 critical point
+2018/01/30 17:06:09 gr 2 critical point
+2018/01/30 17:06:09 gr 5 critical point
+----
+
+## preloaded.go
+
+This is the implemenation of section 3.7.6, Preloaded turnstile.  It uses
+the SignalN addition to sem.ChanSem.
+
+----
+$ go run -race preloaded.go
+2018/01/30 17:07:01 gr 1 rendezvous
+2018/01/30 17:07:01 gr 5 rendezvous
+2018/01/30 17:07:01 gr 2 rendezvous
+2018/01/30 17:07:01 gr 3 rendezvous
+2018/01/30 17:07:01 gr 4 rendezvous
+2018/01/30 17:07:01 gr 4 critical point
+2018/01/30 17:07:01 gr 3 critical point
+2018/01/30 17:07:01 gr 2 critical point
+2018/01/30 17:07:01 gr 1 critical point
+2018/01/30 17:07:01 gr 5 critical point
+----
 
 ## Reformulation
 
