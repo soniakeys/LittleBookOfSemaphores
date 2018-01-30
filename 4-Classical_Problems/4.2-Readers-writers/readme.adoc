@@ -1,0 +1,113 @@
+# 4.2 Readers-writers
+
+## chanSem.go
+
+First solution from the book:
+
+----
+$ go run chanSem.go
+2018/01/29 17:41:59 writer 1 writes
+2018/01/29 17:41:59 writer 5 writes
+2018/01/29 17:41:59 writer 2 writes
+2018/01/29 17:41:59 writer 3 writes
+2018/01/29 17:41:59 reader 6 sees 4 bytes
+2018/01/29 17:41:59 reader 1 sees 4 bytes
+2018/01/29 17:41:59 reader 2 sees 4 bytes
+2018/01/29 17:41:59 reader 3 sees 4 bytes
+2018/01/29 17:41:59 reader 4 sees 4 bytes
+2018/01/29 17:41:59 reader 5 sees 4 bytes
+2018/01/29 17:41:59 writer 6 writes
+2018/01/29 17:41:59 writer 4 writes
+----
+
+## lightswitch.go
+
+Simplified solution from the book, using the "lightswitch" pattern.
+I implemented Lightswitch as a type in sem.go, in the sem package,
+then used it in this code.  Unsurprisingly, it works just like chanSem.go:
+
+----
+$ go run lightswitch.go
+2018/01/29 18:22:13 writer 2 writes
+2018/01/29 18:22:13 writer 4 writes
+2018/01/29 18:22:13 writer 3 writes
+2018/01/29 18:22:13 reader 2 sees 3 bytes
+2018/01/29 18:22:13 reader 1 sees 3 bytes
+2018/01/29 18:22:13 reader 4 sees 3 bytes
+2018/01/29 18:22:13 reader 3 sees 3 bytes
+2018/01/29 18:22:13 reader 5 sees 3 bytes
+2018/01/29 18:22:13 reader 6 sees 3 bytes
+2018/01/29 18:22:13 writer 5 writes
+2018/01/29 18:22:13 writer 6 writes
+2018/01/29 18:22:13 writer 1 writes
+----
+
+## noStarve.go
+
+Implemented following the book.  It was interesting to see a little bit
+different behavior in the simulation.  There are no timers or attempts to
+introduce randomness in the program, but the program has some random variation
+from run to run just because of randomness in the scheduler.  So runs have
+some common patterns but some variation.  The common patterns of noStarve.go
+are obviously a little different than the patterns of chanSem.go and
+lightswitch.go
+
+----
+$ go run noStarve.go
+2018/01/29 18:29:05 writer 2 writes
+2018/01/29 18:29:05 reader 1 sees 1 bytes
+2018/01/29 18:29:05 writer 3 writes
+2018/01/29 18:29:05 writer 4 writes
+2018/01/29 18:29:05 writer 5 writes
+2018/01/29 18:29:05 writer 6 writes
+2018/01/29 18:29:05 reader 6 sees 5 bytes
+2018/01/29 18:29:05 writer 1 writes
+2018/01/29 18:29:05 reader 2 sees 6 bytes
+2018/01/29 18:29:05 reader 3 sees 6 bytes
+2018/01/29 18:29:05 reader 4 sees 6 bytes
+2018/01/29 18:29:05 reader 5 sees 6 bytes
+----
+
+## wPriority.go
+
+The final solution from the book.  This also shows patterns of output that are
+a little different compared to the previous solutions.
+
+----
+$ go run wPriority.go
+2018/01/29 18:35:50 reader 6 sees 0 bytes
+2018/01/29 18:35:50 writer 5 writes
+2018/01/29 18:35:50 writer 1 writes
+2018/01/29 18:35:50 writer 2 writes
+2018/01/29 18:35:50 writer 3 writes
+2018/01/29 18:35:50 writer 4 writes
+2018/01/29 18:35:50 writer 6 writes
+2018/01/29 18:35:50 reader 2 sees 6 bytes
+2018/01/29 18:35:50 reader 1 sees 6 bytes
+2018/01/29 18:35:50 reader 4 sees 6 bytes
+2018/01/29 18:35:50 reader 3 sees 6 bytes
+2018/01/29 18:35:50 reader 5 sees 6 bytes
+----
+
+## rwmutex.go
+
+Finally, the Go solution without semaphores.  Go has a great read-write mutex
+in the sync package of the standard library.  It is documented to have write
+priority.  So somewhat pleasingly, the patterns of output look much like the
+patterns produced by wPriority.go
+
+----
+$ go run rwmutex.go
+2018/01/29 17:49:32 reader 6 sees 0 bytes
+2018/01/29 17:49:32 writer 1 writes
+2018/01/29 17:49:32 writer 2 writes
+2018/01/29 17:49:32 writer 3 writes
+2018/01/29 17:49:32 writer 4 writes
+2018/01/29 17:49:32 writer 5 writes
+2018/01/29 17:49:32 writer 6 writes
+2018/01/29 17:49:32 reader 1 sees 6 bytes
+2018/01/29 17:49:32 reader 2 sees 6 bytes
+2018/01/29 17:49:32 reader 3 sees 6 bytes
+2018/01/29 17:49:32 reader 4 sees 6 bytes
+2018/01/29 17:49:32 reader 5 sees 6 bytes
+----
