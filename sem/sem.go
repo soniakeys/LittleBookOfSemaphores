@@ -86,3 +86,30 @@ func (cs *CountSem) Wait() {
 	}
 	cs.Cond.L.Unlock()
 }
+
+type Lightswitch struct {
+	counter int
+	mutex   ChanSem
+}
+
+func NewLightswitch() *Lightswitch {
+	return &Lightswitch{mutex: NewChanSem(1, 1)}
+}
+
+func (l *Lightswitch) Lock(semaphore ChanSem) {
+	l.mutex.Wait()
+	l.counter++
+	if l.counter == 1 {
+		semaphore.Wait()
+	}
+	l.mutex.Signal()
+}
+
+func (l *Lightswitch) Unlock(semaphore ChanSem) {
+	l.mutex.Wait()
+	l.counter--
+	if l.counter == 0 {
+		semaphore.Signal()
+	}
+	l.mutex.Signal()
+}
