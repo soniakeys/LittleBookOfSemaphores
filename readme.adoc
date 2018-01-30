@@ -2,6 +2,9 @@
 
 ## Preface
 
+This repo implements examples and exercises from Allen B. Downey's
+http://greenteapress.com/wp/semaphores/[The Little Book of Semaphores].
+
 Why?!! some would cry.  Go has wonderful concurrency support, quite
 deliberately omitting semaphores.  Why try to pound square pegs into
 round holes?
@@ -44,6 +47,43 @@ the book.
 The naming and structure of the directory tree generally follows the chapters
 and sections of the book.  There is just one importable Go package, "sem", at
 the top of the directory tree.  Otherwise code is all runnable programs.
+
+## Conventions
+
+I try to implement most of Downey's solutions from the book and implement them
+as literally as possible using a semaphore implementation from the sem package.
+The semaphore implementation I currently trust is the one based on Go channels
+and so for most sections the first solution presented is implemented in a Go
+source file called `chanSem.go`.
+
+Other implmentations will have somewhate descriptive file names.
+
+The readme for each section will have a heading for each program in the
+directory, saying something about it and giving example out.  Code is not
+generally copied or quoted in the readme; the code is right there in the repo.
+
+Downey typically gives a list of syncronization variables as his "hint" for
+solving the problem.  As a convention I will try to keep these in a separate
+parenthesized variable declaration.  So for example where Downey has
+
+.Barrier hint
+----
+n = the number of threads
+count = 0
+mutex = Semaphore (1)
+barrier = Semaphore (0)
+----
+
+my Go code will read
+
+----
+var (
+    n       = 5
+    count   = 0
+    mutex   = sem.NewChanSem(1, 1)
+    barrier = sem.NewChanSem(0, 1)
+)
+----
 
 ## Status
 
