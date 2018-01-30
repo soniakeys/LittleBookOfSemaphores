@@ -41,6 +41,17 @@ func NewChanSem(initCount, maxCount int) ChanSem {
 // goroutine) would be "signaled" to proceed.
 func (s ChanSem) Signal() { s <- struct{}{} }
 
+// SignalN signals n times.
+//
+// Introduced in section 3.7.6 Preloaded turnstile, with the note that "the
+// multiple signals are not atomic; that is, the signaling thread might be
+// interrupted in the loop.
+func (s ChanSem) SignalN(n int) {
+	for i := 0; i < n; i++ {
+		s.Signal()
+	}
+}
+
 // Wait implements the semaphore "wait" operation.
 //
 // In implementation, it receives an item from the underlying channel.  If
@@ -87,6 +98,48 @@ func (cs *CountSem) Wait() {
 	cs.Cond.L.Unlock()
 }
 
+// Barrier introduced in section 3.7.7
+type Barrier struct {
+	n, count                     int
+	mutex, turnstile, turnstile2 ChanSem
+}
+
+func newBarrier(n int) *Barrier {
+	return &Barrier{
+		n:          n,
+		count:      0,
+		mutex:      NewChanSem(1, 1),
+		turnstile:  NewChanSem(0, 1),
+		turnstile2: NewChanSem(0, 1),
+	}
+}
+
+func (b *Barrier) Phase1() {
+	b.mutex.Wait()
+	b.count++
+	if b.count == b.n {
+		b.turnstile.SignalN(b.n)
+	}
+	b.mutex.Signal()
+	b.turnstile.Wait()
+}
+
+func (b *Barrier) Phase2() {
+	b.mutex.Wait()
+	b.count--
+	if b.count == 0 {
+		b.turnstile2.SignalN(b.n)
+	}
+	b.mutex.Signal()
+	b.turnstile2.Wait()
+}
+
+func (b *Barrier) Wait() {
+	b.Phase1()
+	b.Phase2()
+}
+
+// Lightswitch introduced in section 4.2.2
 type Lightswitch struct {
 	counter int
 	mutex   ChanSem
