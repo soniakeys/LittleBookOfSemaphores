@@ -1,0 +1,364 @@
+# 4.4 Dining philosphers
+
+## chanSem.go
+
+chanSem.go is an implemenation of solution #1.  While the problem is posed as
+if the philosphers wish to eat indefinately, I added a "bite" limit to limit
+the output of the simulation.  Still, a sample run is rather long.
+
+----
+$ go run chanSem.go
+2018/01/30 19:07:00 philosopher 4 thinking
+2018/01/30 19:07:00 philosopher 2 thinking
+2018/01/30 19:07:00 philosopher 1 thinking
+2018/01/30 19:07:00 philosopher 0 thinking
+2018/01/30 19:07:00 philosopher 3 thinking
+2018/01/30 19:07:00 philosopher 3 wants to sit and eat
+2018/01/30 19:07:00 philosopher 3 seated, looking for forks
+2018/01/30 19:07:00 philosopher 3 has right fork
+2018/01/30 19:07:00 philosopher 3 has left fork
+2018/01/30 19:07:00 philosopher 3 eats bite #1
+2018/01/30 19:07:00 philosopher 2 wants to sit and eat
+2018/01/30 19:07:00 philosopher 2 seated, looking for forks
+2018/01/30 19:07:00 philosopher 2 has right fork
+2018/01/30 19:07:00 philosopher 1 wants to sit and eat
+2018/01/30 19:07:00 philosopher 1 seated, looking for forks
+2018/01/30 19:07:00 philosopher 1 has right fork
+2018/01/30 19:07:00 philosopher 0 wants to sit and eat
+2018/01/30 19:07:00 philosopher 0 seated, looking for forks
+2018/01/30 19:07:00 philosopher 0 has right fork
+2018/01/30 19:07:00 philosopher 3 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 3 thinking
+2018/01/30 19:07:00 philosopher 2 has left fork
+2018/01/30 19:07:00 philosopher 2 eats bite #1
+2018/01/30 19:07:00 philosopher 4 wants to sit and eat
+2018/01/30 19:07:00 philosopher 4 seated, looking for forks
+2018/01/30 19:07:00 philosopher 4 has right fork
+2018/01/30 19:07:00 philosopher 1 has left fork
+2018/01/30 19:07:00 philosopher 1 eats bite #1
+2018/01/30 19:07:00 philosopher 2 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 2 thinking
+2018/01/30 19:07:00 philosopher 3 wants to sit and eat
+2018/01/30 19:07:00 philosopher 3 seated, looking for forks
+2018/01/30 19:07:00 philosopher 3 has right fork
+2018/01/30 19:07:00 philosopher 1 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 1 thinking
+2018/01/30 19:07:00 philosopher 0 has left fork
+2018/01/30 19:07:00 philosopher 0 eats bite #1
+2018/01/30 19:07:00 philosopher 1 wants to sit and eat
+2018/01/30 19:07:00 philosopher 1 seated, looking for forks
+2018/01/30 19:07:00 philosopher 2 wants to sit and eat
+2018/01/30 19:07:00 philosopher 0 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 0 thinking
+2018/01/30 19:07:00 philosopher 4 has left fork
+2018/01/30 19:07:00 philosopher 4 eats bite #1
+2018/01/30 19:07:00 philosopher 1 has right fork
+2018/01/30 19:07:00 philosopher 1 has left fork
+2018/01/30 19:07:00 philosopher 1 eats bite #2
+2018/01/30 19:07:00 philosopher 2 seated, looking for forks
+2018/01/30 19:07:00 philosopher 4 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 4 thinking
+2018/01/30 19:07:00 philosopher 3 has left fork
+2018/01/30 19:07:00 philosopher 3 eats bite #2
+2018/01/30 19:07:00 philosopher 4 wants to sit and eat
+2018/01/30 19:07:00 philosopher 4 seated, looking for forks
+2018/01/30 19:07:00 philosopher 3 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 3 thinking
+2018/01/30 19:07:00 philosopher 4 has right fork
+2018/01/30 19:07:00 philosopher 4 has left fork
+2018/01/30 19:07:00 philosopher 4 eats bite #2
+2018/01/30 19:07:00 philosopher 3 wants to sit and eat
+2018/01/30 19:07:00 philosopher 3 seated, looking for forks
+2018/01/30 19:07:00 philosopher 3 has right fork
+2018/01/30 19:07:00 philosopher 0 wants to sit and eat
+2018/01/30 19:07:00 philosopher 1 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 2 has right fork
+2018/01/30 19:07:00 philosopher 1 thinking
+2018/01/30 19:07:00 philosopher 0 seated, looking for forks
+2018/01/30 19:07:00 philosopher 4 full, returns forks, leaves table
+2018/01/30 19:07:00 philosopher 4 thinking
+2018/01/30 19:07:00 philosopher 0 has right fork
+2018/01/30 19:07:00 philosopher 0 has left fork
+2018/01/30 19:07:00 philosopher 0 eats bite #2
+2018/01/30 19:07:00 philosopher 3 has left fork
+2018/01/30 19:07:00 philosopher 3 eats bite #3
+2018/01/30 19:07:01 philosopher 3 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 3 thinking
+2018/01/30 19:07:01 philosopher 2 has left fork
+2018/01/30 19:07:01 philosopher 2 eats bite #2
+2018/01/30 19:07:01 philosopher 4 wants to sit and eat
+2018/01/30 19:07:01 philosopher 4 seated, looking for forks
+2018/01/30 19:07:01 philosopher 4 has right fork
+2018/01/30 19:07:01 philosopher 2 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 2 thinking
+2018/01/30 19:07:01 philosopher 1 wants to sit and eat
+2018/01/30 19:07:01 philosopher 1 seated, looking for forks
+2018/01/30 19:07:01 philosopher 0 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 0 thinking
+2018/01/30 19:07:01 philosopher 4 has left fork
+2018/01/30 19:07:01 philosopher 4 eats bite #3
+2018/01/30 19:07:01 philosopher 1 has right fork
+2018/01/30 19:07:01 philosopher 1 has left fork
+2018/01/30 19:07:01 philosopher 1 eats bite #3
+2018/01/30 19:07:01 philosopher 3 wants to sit and eat
+2018/01/30 19:07:01 philosopher 3 seated, looking for forks
+2018/01/30 19:07:01 philosopher 3 has right fork
+2018/01/30 19:07:01 philosopher 0 wants to sit and eat
+2018/01/30 19:07:01 philosopher 0 seated, looking for forks
+2018/01/30 19:07:01 philosopher 2 wants to sit and eat
+2018/01/30 19:07:01 philosopher 4 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 4 thinking
+2018/01/30 19:07:01 philosopher 2 seated, looking for forks
+2018/01/30 19:07:01 philosopher 0 has right fork
+2018/01/30 19:07:01 philosopher 3 has left fork
+2018/01/30 19:07:01 philosopher 3 eats bite #4
+2018/01/30 19:07:01 philosopher 1 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 0 has left fork
+2018/01/30 19:07:01 philosopher 0 eats bite #3
+2018/01/30 19:07:01 philosopher 1 thinking
+2018/01/30 19:07:01 philosopher 2 has right fork
+2018/01/30 19:07:01 philosopher 3 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 2 has left fork
+2018/01/30 19:07:01 philosopher 2 eats bite #3
+2018/01/30 19:07:01 philosopher 2 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 2 thinking
+2018/01/30 19:07:01 philosopher 1 wants to sit and eat
+2018/01/30 19:07:01 philosopher 1 seated, looking for forks
+2018/01/30 19:07:01 philosopher 0 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 0 thinking
+2018/01/30 19:07:01 philosopher 1 has right fork
+2018/01/30 19:07:01 philosopher 1 has left fork
+2018/01/30 19:07:01 philosopher 1 eats bite #4
+2018/01/30 19:07:01 philosopher 4 wants to sit and eat
+2018/01/30 19:07:01 philosopher 4 seated, looking for forks
+2018/01/30 19:07:01 philosopher 4 has right fork
+2018/01/30 19:07:01 philosopher 4 has left fork
+2018/01/30 19:07:01 philosopher 4 eats bite #4
+2018/01/30 19:07:01 philosopher 4 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 2 wants to sit and eat
+2018/01/30 19:07:01 philosopher 2 seated, looking for forks
+2018/01/30 19:07:01 philosopher 0 wants to sit and eat
+2018/01/30 19:07:01 philosopher 0 seated, looking for forks
+2018/01/30 19:07:01 philosopher 0 has right fork
+2018/01/30 19:07:01 philosopher 1 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 0 has left fork
+2018/01/30 19:07:01 philosopher 0 eats bite #4
+2018/01/30 19:07:01 philosopher 2 has right fork
+2018/01/30 19:07:01 philosopher 2 has left fork
+2018/01/30 19:07:01 philosopher 2 eats bite #4
+2018/01/30 19:07:01 philosopher 2 full, returns forks, leaves table
+2018/01/30 19:07:01 philosopher 0 full, returns forks, leaves table
+----
+
+## leftie.go
+
+A little difference in solution #2 is that since all philosophers can sit at
+once, there is no getting up and down between each bite.  The all sit, they
+all go through their cycles of thinking and eating (they are allowed to think
+at the table) then they all wander off to end the simulation.
+
+----
+$ go run leftie.go
+2018/01/30 19:09:48 philosopher 4 sits to eat
+2018/01/30 19:09:48 philosopher 4 thinking
+2018/01/30 19:09:48 philosopher 1 sits to eat
+2018/01/30 19:09:48 philosopher 1 thinking
+2018/01/30 19:09:48 philosopher 2 sits to eat
+2018/01/30 19:09:48 philosopher 2 thinking
+2018/01/30 19:09:48 philosopher 3 sits to eat
+2018/01/30 19:09:48 philosopher 3 thinking
+2018/01/30 19:09:48 philosopher 0 sits to eat
+2018/01/30 19:09:48 philosopher 0 thinking
+2018/01/30 19:09:48 philosopher 0 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 0 has right fork
+2018/01/30 19:09:48 philosopher 0 has left fork
+2018/01/30 19:09:48 philosopher 0 eats bite #1
+2018/01/30 19:09:48 philosopher 1 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 2 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 2 has right fork
+2018/01/30 19:09:48 philosopher 2 has left fork
+2018/01/30 19:09:48 philosopher 2 eats bite #1
+2018/01/30 19:09:48 philosopher 3 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 2 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 2 thinking
+2018/01/30 19:09:48 philosopher 3 has right fork
+2018/01/30 19:09:48 philosopher 3 has left fork
+2018/01/30 19:09:48 philosopher 3 eats bite #1
+2018/01/30 19:09:48 philosopher 3 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 3 thinking
+2018/01/30 19:09:48 philosopher 0 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 1 has right fork
+2018/01/30 19:09:48 philosopher 1 has left fork
+2018/01/30 19:09:48 philosopher 1 eats bite #1
+2018/01/30 19:09:48 philosopher 0 thinking
+2018/01/30 19:09:48 philosopher 1 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 1 thinking
+2018/01/30 19:09:48 philosopher 4 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 4 has left fork
+2018/01/30 19:09:48 philosopher 4 has right fork
+2018/01/30 19:09:48 philosopher 4 eats bite #1
+2018/01/30 19:09:48 philosopher 2 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 2 has right fork
+2018/01/30 19:09:48 philosopher 2 has left fork
+2018/01/30 19:09:48 philosopher 2 eats bite #2
+2018/01/30 19:09:48 philosopher 4 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 4 thinking
+2018/01/30 19:09:48 philosopher 3 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 4 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 4 has left fork
+2018/01/30 19:09:48 philosopher 4 has right fork
+2018/01/30 19:09:48 philosopher 4 eats bite #2
+2018/01/30 19:09:48 philosopher 4 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 4 thinking
+2018/01/30 19:09:48 philosopher 0 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 0 has right fork
+2018/01/30 19:09:48 philosopher 0 has left fork
+2018/01/30 19:09:48 philosopher 0 eats bite #2
+2018/01/30 19:09:48 philosopher 1 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 4 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 2 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 2 thinking
+2018/01/30 19:09:48 philosopher 3 has right fork
+2018/01/30 19:09:48 philosopher 3 has left fork
+2018/01/30 19:09:48 philosopher 3 eats bite #2
+2018/01/30 19:09:48 philosopher 0 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 0 thinking
+2018/01/30 19:09:48 philosopher 1 has right fork
+2018/01/30 19:09:48 philosopher 1 has left fork
+2018/01/30 19:09:48 philosopher 1 eats bite #2
+2018/01/30 19:09:48 philosopher 4 has left fork
+2018/01/30 19:09:48 philosopher 1 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 1 thinking
+2018/01/30 19:09:48 philosopher 3 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 3 thinking
+2018/01/30 19:09:48 philosopher 4 has right fork
+2018/01/30 19:09:48 philosopher 4 eats bite #3
+2018/01/30 19:09:48 philosopher 3 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 3 has right fork
+2018/01/30 19:09:48 philosopher 2 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 2 has right fork
+2018/01/30 19:09:48 philosopher 4 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 4 thinking
+2018/01/30 19:09:48 philosopher 3 has left fork
+2018/01/30 19:09:48 philosopher 3 eats bite #3
+2018/01/30 19:09:48 philosopher 0 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 0 has right fork
+2018/01/30 19:09:48 philosopher 0 has left fork
+2018/01/30 19:09:48 philosopher 0 eats bite #3
+2018/01/30 19:09:48 philosopher 1 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 4 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 3 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 3 thinking
+2018/01/30 19:09:48 philosopher 2 has left fork
+2018/01/30 19:09:48 philosopher 2 eats bite #3
+2018/01/30 19:09:48 philosopher 0 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 0 thinking
+2018/01/30 19:09:48 philosopher 1 has right fork
+2018/01/30 19:09:48 philosopher 4 has left fork
+2018/01/30 19:09:48 philosopher 4 has right fork
+2018/01/30 19:09:48 philosopher 4 eats bite #4
+2018/01/30 19:09:48 philosopher 2 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 2 thinking
+2018/01/30 19:09:48 philosopher 1 has left fork
+2018/01/30 19:09:48 philosopher 1 eats bite #3
+2018/01/30 19:09:48 philosopher 2 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 4 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 4 full, leaves table
+2018/01/30 19:09:48 philosopher 0 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 0 has right fork
+2018/01/30 19:09:48 philosopher 3 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 3 has right fork
+2018/01/30 19:09:48 philosopher 3 has left fork
+2018/01/30 19:09:48 philosopher 3 eats bite #4
+2018/01/30 19:09:48 philosopher 1 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 1 thinking
+2018/01/30 19:09:48 philosopher 2 has right fork
+2018/01/30 19:09:48 philosopher 0 has left fork
+2018/01/30 19:09:48 philosopher 0 eats bite #4
+2018/01/30 19:09:48 philosopher 0 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 0 full, leaves table
+2018/01/30 19:09:48 philosopher 3 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 3 full, leaves table
+2018/01/30 19:09:48 philosopher 2 has left fork
+2018/01/30 19:09:48 philosopher 2 eats bite #4
+2018/01/30 19:09:48 philosopher 1 wants to eat, looks for forks
+2018/01/30 19:09:48 philosopher 1 has right fork
+2018/01/30 19:09:48 philosopher 2 satisfied for the moment, returns forks
+2018/01/30 19:09:48 philosopher 2 full, leaves table
+2018/01/30 19:09:48 philosopher 1 has left fork
+2018/01/30 19:09:48 philosopher 1 eats bite #4
+2018/01/30 19:09:49 philosopher 1 satisfied for the moment, returns forks
+2018/01/30 19:09:49 philosopher 1 full, leaves table
+----
+
+## mutex.go
+
+Semaphore-free.  This is also a leftie solution.  A fork is described an object
+with mutually exclusive access so it's intuitive to use a sync.Mutex for a
+fork.
+
+----
+$ go run mutex.go
+2018/01/30 19:17:30 table empty
+2018/01/30 19:17:30 philospher 0 seated
+2018/01/30 19:17:30 philospher 0 hungry
+2018/01/30 19:17:30 philospher 2 seated
+2018/01/30 19:17:30 philospher 2 hungry
+2018/01/30 19:17:30 philospher 2 taking bite 1
+2018/01/30 19:17:30 philospher 0 taking bite 1
+2018/01/30 19:17:30 philospher 4 seated
+2018/01/30 19:17:30 philospher 4 hungry
+2018/01/30 19:17:30 philospher 1 seated
+2018/01/30 19:17:30 philospher 1 hungry
+2018/01/30 19:17:30 philospher 3 seated
+2018/01/30 19:17:30 philospher 3 hungry
+2018/01/30 19:17:30 philospher 4 taking bite 1
+2018/01/30 19:17:30 philospher 0 thinking
+2018/01/30 19:17:30 philospher 4 thinking
+2018/01/30 19:17:30 philospher 4 hungry
+2018/01/30 19:17:30 philospher 4 taking bite 2
+2018/01/30 19:17:30 philospher 0 hungry
+2018/01/30 19:17:30 philospher 2 thinking
+2018/01/30 19:17:30 philospher 1 taking bite 1
+2018/01/30 19:17:30 philospher 4 thinking
+2018/01/30 19:17:30 philospher 3 taking bite 1
+2018/01/30 19:17:30 philospher 1 thinking
+2018/01/30 19:17:30 philospher 0 taking bite 2
+2018/01/30 19:17:30 philospher 2 hungry
+2018/01/30 19:17:30 philospher 1 hungry
+2018/01/30 19:17:30 philospher 4 hungry
+2018/01/30 19:17:30 philospher 3 thinking
+2018/01/30 19:17:30 philospher 2 taking bite 2
+2018/01/30 19:17:30 philospher 0 thinking
+2018/01/30 19:17:30 philospher 4 taking bite 3
+2018/01/30 19:17:30 philospher 4 thinking
+2018/01/30 19:17:30 philospher 4 satisfied
+2018/01/30 19:17:30 philospher 4 left the table
+2018/01/30 19:17:30 philospher 2 thinking
+2018/01/30 19:17:30 philospher 1 taking bite 2
+2018/01/30 19:17:30 philospher 2 hungry
+2018/01/30 19:17:30 philospher 3 hungry
+2018/01/30 19:17:30 philospher 3 taking bite 2
+2018/01/30 19:17:30 philospher 1 thinking
+2018/01/30 19:17:30 philospher 0 hungry
+2018/01/30 19:17:30 philospher 0 taking bite 3
+2018/01/30 19:17:30 philospher 1 hungry
+2018/01/30 19:17:30 philospher 3 thinking
+2018/01/30 19:17:30 philospher 2 taking bite 3
+2018/01/30 19:17:30 philospher 3 hungry
+2018/01/30 19:17:30 philospher 0 thinking
+2018/01/30 19:17:30 philospher 2 thinking
+2018/01/30 19:17:30 philospher 1 taking bite 3
+2018/01/30 19:17:30 philospher 3 taking bite 3
+2018/01/30 19:17:30 philospher 0 satisfied
+2018/01/30 19:17:30 philospher 0 left the table
+2018/01/30 19:17:30 philospher 1 thinking
+2018/01/30 19:17:30 philospher 2 satisfied
+2018/01/30 19:17:30 philospher 2 left the table
+2018/01/30 19:17:30 philospher 3 thinking
+2018/01/30 19:17:31 philospher 1 satisfied
+2018/01/30 19:17:31 philospher 1 left the table
+2018/01/30 19:17:31 philospher 3 satisfied
+2018/01/30 19:17:31 philospher 3 left the table
+2018/01/30 19:17:31 table empty
+----
