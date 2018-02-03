@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/soniakeys/LittleBookOfSemaphores/sem"
 )
@@ -9,10 +9,10 @@ import (
 func main() {
 	a1done := sem.NewCountSem(0)
 	go func() { // goroutine "A"
-		log.Print("statement a1")
+		fmt.Println("statement a1")
 		a1done.Signal()
 	}()
 	// goroutine "B"
 	a1done.Wait()
-	log.Print("statement b1")
+	fmt.Println("statement b1")
 }

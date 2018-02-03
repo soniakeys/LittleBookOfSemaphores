@@ -9,3 +9,6 @@ example with a sem.CountSem.
 
 Then chan.go shows that a Go unbuffered channel accomplishes the signaling
 pattern as a simple replacement for the semaphore.
+
+Communcate.go is a variation of chan.go demonstrating how a channel send can
+both synchronize and communicate.

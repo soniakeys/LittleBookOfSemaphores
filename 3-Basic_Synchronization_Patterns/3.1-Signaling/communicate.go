@@ -3,12 +3,11 @@ package main
 import "fmt"
 
 func main() {
-	a1done := make(chan int)
+	a1msg := make(chan string)
 	go func() { // goroutine "A"
-		fmt.Println("statement a1")
-		a1done <- 1
+		a1msg <- "statement a1"
 	}()
 	// goroutine "B"
-	<-a1done
+	fmt.Println(<-a1msg)
 	fmt.Println("statement b1")
 }
