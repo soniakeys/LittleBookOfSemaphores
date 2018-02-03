@@ -1,14 +1,17 @@
 # 3 Basic Synchronization Patterns
+:toc:
+:toc-placement: preamble
 
 Chapter 3 introduces synchronization patterns used throughout the book.
 In this repo, I present book solutions as given with these patterns, then
 I go on to present solutions to the problem using more idiomatic Go patterns.
 
-Below I document some of these Go patterns.  This is not a comprehensive or
-perhaps even a balanced presentation of Go concurrency patterns, rather it
-only covers patterns I have used in my solutions.
+Below, in this readme, I document some of these Go patterns.  This is not a
+comprehensive or perhaps even a balanced presentation of Go concurrency
+patterns, rather it only covers patterns I have used in my solutions.
 
-:toc:
+(Non-Go patterns, as presented in the book, are covered in 3.x subdirectories,
+the subdirectories under this one.)
 
 ## Goroutine
 
@@ -25,7 +28,7 @@ with a `go` statement; the other goroutine is simply main().
 
 ## Unbuffered channel
 
-[none]
+[no-bullet]
 * https://golang.org/ref/spec#Channel_types
 * https://golang.org/ref/spec#Send_statements
 * https://golang.org/ref/spec#Receive_operator
@@ -35,12 +38,12 @@ element.
 
 One goroutine sends a value, it then blocks until the other is ready to
 receive.  Or, a goroutine ready to receive blocks until the other is ready
-to send.  Either way, it represents a *synchronous rendezvous*.  One of the
+to send.  Either way, it represents a _synchronous rendezvous_.  One of the
 two will wait until the other catches up and then one will be at it's send
 statement at the same instant the the other is at its receive expression.
 
 The unbufferend channel is thus a synchronization element.  In addition though,
-it is a *communication* element.  A send sends a value to the other goroutine.
+it is a _communication_ element.  A send sends a value to the other goroutine.
 This value can be of any type and so can hold or reference arbitrarily
 complex data.
 
@@ -54,3 +57,39 @@ sent is a dummy value.  The receiving goroutine never even looks at the value.
 
 3.1-Signaling/communicate.go is a variation of chan.go demonstrating how a
 channel send can both synchronize and communicate.
+
+## WaitGroup
+
+In the sync package of the Go standard library is the WaitGroup type.
+
+https://golang.org/pkg/sync/#WaitGroup
+
+It allows a goroutine to wait for multiple goroutines to finish doing
+something.  First demonstrated in 3.3-Rendezvous/chanSem.go and buffered.go
+programs, where main starts two goroutines and waits for them to finish.
+Note this wait-to-finish operation is not described in section 3.3 of the
+book.  The book does not describe how the thread code would be incorporated
+into a complete program.  To make a complete simulation though, and use the
+thread solutions from the book as literally as possible though, we need our
+main() thread to start the A and B threads and then _wait for them to output
+their results_ before terminating.
+
+## Log package
+
+An underdocumented and underappreciated feature of the log package is that it
+does extra locking to ensure that functions such as log.Print() write their
+output atomicly.  Output to stdout, for example is not generally guaranteed
+by the operating system to be atomic.  Calls to fmt.Print() from separate
+goroutines can actually generate interleaved output.
+
+If 3.3-Rendezvous/chanSem.go, which writes output from two concurrent
+goroutines, used fmt.Print, it can occasionally produce output like
+
+----
+statement a1
+statement b1
+statemstatement b1
+ent a1
+----
+
+The use of log.Print guards against this.
