@@ -1,0 +1,56 @@
+# 3 Basic Synchronization Patterns
+
+Chapter 3 introduces synchronization patterns used throughout the book.
+In this repo, I present book solutions as given with these patterns, then
+I go on to present solutions to the problem using more idiomatic Go patterns.
+
+Below I document some of these Go patterns.  This is not a comprehensive or
+perhaps even a balanced presentation of Go concurrency patterns, rather it
+only covers patterns I have used in my solutions.
+
+:toc:
+
+## Goroutine
+
+https://golang.org/ref/spec#Go_statements
+
+Where the book says "thread" we read "goroutine".
+
+One thing to remember is that main -- a main() function in a package main --
+is running as a goroutine itself.  If another goroutine is started, then
+there are two goroutines.
+
+In 3.1-Signaling/chan.go for example, only one goroutine is explicitly started
+with a `go` statement; the other goroutine is simply main().
+
+## Unbuffered channel
+
+[none]
+* https://golang.org/ref/spec#Channel_types
+* https://golang.org/ref/spec#Send_statements
+* https://golang.org/ref/spec#Receive_operator
+
+An unbuffered channel is perhaps the simplest and most basic Go concurrency
+element.
+
+One goroutine sends a value, it then blocks until the other is ready to
+receive.  Or, a goroutine ready to receive blocks until the other is ready
+to send.  Either way, it represents a *synchronous rendezvous*.  One of the
+two will wait until the other catches up and then one will be at it's send
+statement at the same instant the the other is at its receive expression.
+
+The unbufferend channel is thus a synchronization element.  In addition though,
+it is a *communication* element.  A send sends a value to the other goroutine.
+This value can be of any type and so can hold or reference arbitrarily
+complex data.
+
+### Synchronization
+
+3.1-Signaling/chan.go uses a channel only for synchronizaton.  The channel
+type is arbitrary and so is just some thing simple, an int, and the value
+sent is a dummy value.  The receiving goroutine never even looks at the value.
+
+### Communication
+
+3.1-Signaling/communicate.go is a variation of chan.go demonstrating how a
+channel send can both synchronize and communicate.
