@@ -101,53 +101,88 @@ their work.  The idea is to approach a technique that might be useful in
 something like a physics simulation, where workers all compute something for
 a new physical state staring from an existing physical state.
 
+## data.go
+
+Even with this more interesting problem, we still have a relatively simple
+solution.  We are distributing some work across multiple goroutines and we
+need data preserved across cycles.  We need a separate data workspace for each
+running goroutine, but the simple solution is to create the workspaces outside
+of the goroutines and simply pass a pointer to a workspace.  Goroutines are
+cheap to create and are anonymous.
+
+----
+$ go run -race data.go
+2018/02/04 14:27:43 cycle 0 gr 0 working
+2018/02/04 14:27:43 cycle 0 gr 1 working
+2018/02/04 14:27:43 cycle 0 gr 2 working
+2018/02/04 14:27:43 cycle 1 gr 0 working
+2018/02/04 14:27:43 cycle 1 gr 1 working
+2018/02/04 14:27:43 cycle 1 gr 2 working
+2018/02/04 14:27:43 cycle 2 gr 0 working
+2018/02/04 14:27:43 cycle 2 gr 1 working
+2018/02/04 14:27:43 cycle 2 gr 2 working
+2018/02/04 14:27:43 cycle 3 gr 0 working
+2018/02/04 14:27:43 cycle 3 gr 1 working
+2018/02/04 14:27:43 cycle 3 gr 2 working
+2018/02/04 14:27:43 count[0] = 4
+2018/02/04 14:27:43 count[1] = 4
+2018/02/04 14:27:43 count[2] = 4
+----
+
 ## workerLoop.go
 
-The latest reformulation sounds interesting, but really we have no real problem
-to solve.  workerLoop.go is just another toy program without much purpose but
-anyway shows off some programming techniques.  Anyway, a quick description:
-
-The part of the reformulation that says main "must communicate to the workers
-whether to do another cycle or to wrap up their work" kind of implies that
-workers must be ready to receive and act on two different messages.  The Go
+Finally, while the Go solutions described above are simple ways to solve
+this type of problem, workerLoop.go is given as a Go solution more like the
+two-phase barrier presented in the book.  It implements a two-phase barrier
+within goroutines that are started once and run across all computation cycles
+before terminating.  Workers must be ready to receive and act on two different
+messages, a message to perform another cycle and a message to quit.  The Go
 select statement handles this.
 
-Main sends the allDone message if it needs no more computation cycles.  This
+Main sends a cycleStart message to send the workers off on one more
+computation cycle.  The additional cycleReset message is the second "phase".
+
+Main sends a "quit" message if it needs no more computation cycles.  This
 is the signal for the workers to wrap up and terminate.  We implement "wrap
 up" as printing our accumulated count, this simple count being our result
 accumulated over the work cycles.
 
-Main sends the cycleStart message to send the workers off on one more
-computation cycle.
+The quit, cycleStart, and cycleReset messages are broadcast messages
+implemented with the channel close technique introduced in section 3.6.
 
-Both the allDone and the cycleStart messages are broadcast messages implemented
-with the channel close technique.
+Then, this two-phase barrier between computation cycles is a little tricky.
+Closing a channel is not a "reusable" operation.  That is, there is no way to
+reopen a closed channel.  Channels are super cheap to create though.  No need
+to reuse, just re-make the channel.  The trick is that to avoid a race
+condition in recreating the cycleStart channel, we need this two-phase
+technique.  We use one more channel, cycleReset, to make the second phase.
+Each phase re-makes the channel for the other phase.
 
-Finally, the barrier between computation cycles is a little tricky.  Closing
-a channel is not a "reusable" operation.  That is, there is no way to reopen
-a closed channel.  Channels are super cheap to create though.  No need to
-reuse, just re-make the channel.  The last trick is to use one more channel,
-cycleReset, as the final barrier of a cycle.
+This two-phase solution is presented to show a solution much like the book
+solution.  However, it is not recommend over the technique of `data.go`.
+Comparing `data.go` and this solution, `workerLoop.go`, `data.go` is much
+simpler and the low cost of goroutine creation keeps it fast.  The complexity
+of `workerLoop.go` is not justified.
 
 ----
-$ go run workerLoop.go
-2018/01/27 16:46:14 cycle 0
-2018/01/27 16:46:14   gr 0 working
-2018/01/27 16:46:14   gr 1 working
-2018/01/27 16:46:14   gr 2 working
-2018/01/27 16:46:14 cycle 1
-2018/01/27 16:46:14   gr 2 working
-2018/01/27 16:46:14   gr 1 working
-2018/01/27 16:46:14   gr 0 working
-2018/01/27 16:46:14 cycle 2
-2018/01/27 16:46:14   gr 2 working
-2018/01/27 16:46:14   gr 0 working
-2018/01/27 16:46:14   gr 1 working
-2018/01/27 16:46:14 cycle 3
-2018/01/27 16:46:14   gr 2 working
-2018/01/27 16:46:14   gr 1 working
-2018/01/27 16:46:14   gr 0 working
-2018/01/27 16:46:14 gr 2 counted to 4
-2018/01/27 16:46:14 gr 0 counted to 4
-2018/01/27 16:46:14 gr 1 counted to 4
+$ go run -race workerLoop.go
+2018/02/04 14:27:10 cycle 0
+2018/02/04 14:27:10   gr 0 working
+2018/02/04 14:27:10   gr 2 working
+2018/02/04 14:27:10   gr 1 working
+2018/02/04 14:27:10 cycle 1
+2018/02/04 14:27:10   gr 0 working
+2018/02/04 14:27:10   gr 1 working
+2018/02/04 14:27:10   gr 2 working
+2018/02/04 14:27:10 cycle 2
+2018/02/04 14:27:10   gr 2 working
+2018/02/04 14:27:10   gr 1 working
+2018/02/04 14:27:10   gr 0 working
+2018/02/04 14:27:10 cycle 3
+2018/02/04 14:27:10   gr 2 working
+2018/02/04 14:27:10   gr 1 working
+2018/02/04 14:27:10   gr 0 working
+2018/02/04 14:27:10 gr 0 counted to 4
+2018/02/04 14:27:10 gr 1 counted to 4
+2018/02/04 14:27:10 gr 2 counted to 4
 ----
