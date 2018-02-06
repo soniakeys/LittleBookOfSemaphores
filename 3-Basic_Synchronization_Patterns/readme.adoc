@@ -218,3 +218,13 @@ roughly the number of sends you expect to be queued.
 https://golang.org/pkg/sync/#RWMutex
 
 Used in 4.2-Readers-writers/rwmutex.go
+
+## Range over a channel
+
+* https://golang.org/ref/spec#For_statements
+* https://golang.org/ref/spec#For_range
+
+Read down to the parts about channels.  This is a great compact syntax for
+iterating over values received from a channel.  Iteration ends when the channel
+is closed and all previously sent values have been received.  See use in
+4.5-Cigarette_smokers/table.go.
