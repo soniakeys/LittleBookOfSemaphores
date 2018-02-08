@@ -1,0 +1,420 @@
+# 5.1 Dining savages
+
+## book.go
+
+The given "unsynchronized code" runs in infinite loops, and while that works,
+I thought it nicer to run the simulation for a specified finite number of pot
+fillings:
+
+----
+$ go run -race book.go
+2018/02/07 18:34:54 3 pot fillings:
+2018/02/07 18:34:54 cook puts 4 servings in pot
+2018/02/07 18:34:54 savage 1 gets serving from pot
+2018/02/07 18:34:54 savage 1 eats
+2018/02/07 18:34:54 savage 2 gets serving from pot
+2018/02/07 18:34:54 savage 2 eats
+2018/02/07 18:34:54 savage 3 gets serving from pot
+2018/02/07 18:34:54 savage 3 eats
+2018/02/07 18:34:54 savage 4 gets serving from pot
+2018/02/07 18:34:54 savage 4 eats
+2018/02/07 18:34:54 cook puts 4 servings in pot
+2018/02/07 18:34:54 savage 5 gets serving from pot
+2018/02/07 18:34:54 savage 5 eats
+2018/02/07 18:34:54 savage 6 gets serving from pot
+2018/02/07 18:34:54 savage 6 eats
+2018/02/07 18:34:54 savage 1 gets serving from pot
+2018/02/07 18:34:54 savage 1 eats
+2018/02/07 18:34:54 savage 2 gets serving from pot
+2018/02/07 18:34:54 savage 2 eats
+2018/02/07 18:34:54 cook puts 4 servings in pot
+2018/02/07 18:34:54 savage 3 gets serving from pot
+2018/02/07 18:34:54 savage 3 eats
+2018/02/07 18:34:54 savage 4 gets serving from pot
+2018/02/07 18:34:54 savage 4 eats
+2018/02/07 18:34:54 savage 5 gets serving from pot
+2018/02/07 18:34:54 savage 5 eats
+2018/02/07 18:34:54 savage 6 gets serving from pot
+2018/02/07 18:34:54 savage 6 eats
+----
+
+## mutex.go
+
+This is a version much like the book solution but with standard Go
+synchronization rather than semaphores.  Also while the algorithm remains
+much as in the book solution, I made a few changes that I think are
+clarifications.
+
+I named the mutex `headOfLine`.  The implication of the book is that the mutex
+protects the variable `servings` (which I clarified to `servingsInPot`) but it
+seems to me that algorithm is more accurately protecting a condition where a
+single savage can either take from the pot or engage the cook.  While one
+savage is at the head of the line, no other savage can perform either of these
+activities.  It's like the savages are civilized and line up single file and
+wait quietly for a turn at the pot.
+
+This also clarifies that it's okay to let the cook fill the pot.  The mutex
+isn't on the pot, it's on this head-of-line position where a savage can engage
+the cook.  It's the synchronization of `emptyPot` and `fullPot` that prevent
+any race between the savage and the cook in accessing the pot.
+
+I gave these elements the more verbose names `seeEmptyPotWakeCook` and
+`seeFullPotCookSleeps`.  I added "see" to reflect that these model the savage
+observing a condition of the pot.  I added "WakeCook" and "CookSleeps" to
+reflect that these elements are doubling as indicators of the cooks waking
+status.  The problem description says "...the savage wakes up the cook..."
+but then the book solution has no mention of the cooks waking status.
+
+There are a few other little changes, but less significant I think.
+
+----
+$ go run -race mutex.go
+2018/02/07 23:51:25 3 pot fillings:
+2018/02/07 23:51:25 savage 2 finds pot empty, wakes cook
+2018/02/07 23:51:25 cook puts 4 servings in pot
+2018/02/07 23:51:25 savage 2 eats
+2018/02/07 23:51:25 savage 4 eats
+2018/02/07 23:51:25 savage 1 eats
+2018/02/07 23:51:25 savage 3 eats
+2018/02/07 23:51:25 savage 2 finds pot empty, wakes cook
+2018/02/07 23:51:25 cook puts 4 servings in pot
+2018/02/07 23:51:25 savage 2 eats
+2018/02/07 23:51:25 savage 5 eats
+2018/02/07 23:51:25 savage 6 eats
+2018/02/07 23:51:25 savage 2 eats
+2018/02/07 23:51:25 savage 4 finds pot empty, wakes cook
+2018/02/07 23:51:25 cook puts 4 servings in pot
+2018/02/07 23:51:25 savage 4 eats
+2018/02/07 23:51:25 savage 5 eats
+2018/02/07 23:51:25 savage 1 eats
+2018/02/07 23:51:25 savage 1 eats
+----
+
+## atomic.go
+
+The head-of-line mechanism bothered me so I tried a version where there was
+no such concept.  Savages can crowd around the pot and help themselves without
+cooperating with each other.  Wahoo, did that change the problem.
+
+I use a variable for the number of servings in the pot (now reverting to the
+more terse name `pot`) and I control access to it with functions of the
+sync/atomic package.  I could have used a mutex, but for a simple integer
+count, atomic is easier I think.
+
+With no "line" and no cooperation, I allow any number of savages to complain
+to the cook and be waiting not for their turn in line, but waiting directly
+for the pot to be filled.
+
+I model the cook's waking status explictly.  I allow for savages to continue
+to arrive, find the pot empty, and yell at the cook, though the cook might
+already be awake.  And I allow for such craziness as a savage finding the pot
+empty concurrently with the cook filling the pot, then yelling at the cook to
+wake up although the pot is no longer empty and while the cook may have even
+returned to sleep.
+
+With those basic ideas in mind, here's a detailed walk through of the program:
+
+Up front, there's a package variable `wake` that gets initialized.  I'll
+describe how it works later.  Then starting with main(), I initialize the
+WaitGroup `wg`.  I confess I've resorted to different techniques for ending
+the simulation in the three programs `book.go`, `chan.go`, and this one
+`atomic.go`.  Here I precompute the total number of servings that will be
+eaten over the course of the simulation.  Ultimately I'll wait for the report
+that the last serving has been consumed before terminating.
+
+That's all the initialization that is needed before starting the savage
+goroutines.  Each is called with an integer argument, used in output to
+distinguish the savages.  First thing inside a savage goroutine, a `watch`
+channel is created.  Each savage goroutine creates its own `watch` channel.
+This is a "line-of-sight" channel that will be used (later) for the savage
+to watch for the pot to be filled.
+
+So then there's an infinite loop.  Playing with the simulation, I first have
+the savage spend a random amount away from camp, then become hungry and return
+to camp.
+
+"Arriving in camp", there's an inner loop where the savage attempts to obtain
+a serving.  The savage stays in this loop until he gets his serving.  The pot
+is accessed by indiscriminately decrementing the count of servings in the pot.
+The function `atomic.AddInt64` returns the value of the variable _after_ the
+operation.  This first time through, the initial value of `pot` will be zero
+and the result of `AddInt64(&pot, -1)` will be -1.  Any negative result is
+interpreted as meaning the pot was initially empty.  So in this case we don't
+break.  We output the message that the savage is waking the cook, then we do
+something tricky.
+
+That package variable `wake` I mentioned?  That got created as a _channel of
+channels_.  Yes, you can do that, and it's even idiomatic!  This next line
+sends the savage's `watch` channel on this channel of channels.  The channel
+of channels is named "wake" because, you guessed it, a send on this channel
+represents a message to wake the cook.  Let's look down in the main goroutine
+now to see how this is message is handled.
+
+In main() the last thing we did was start the savage goroutines.  There's a
+little more initialization here before entering an "event loop".  First we
+define an `awake` variable.  This explicitly models the cooks waking status.
+The value `waiting` is initialized as a buffer to hold a channel for each
+savage.  You're right if you're guessing that it's the `watch` channels that
+we'll store here.  But that comes later.  Next we declare a "kitchen timer"
+variable that will be used later to signal when filling the pot is complete.
+Finally, to start the event loop, we initialize one more variable, a count
+of how many pots have been cooked.
+
+So here's a very typical pattern to implement an event loop, an infinite loop
+with a select statement inside.  Our select handles just two events, a "wake"
+event that I'll describe right away and a "stew" event, the "kitchen timer"
+I mentioned.  As initialized, `stew` is nil, so we're not concerned with it
+just yet.  Currently we're handling the wake event that we just saw sent from
+a savage goroutine.
+
+Recall that the value sent on the wake channel was the savage's `watch`
+channel, his "line-of-sight" on which he is watching the pot.  So this next
+code handling this channel doesn't really model anything the cook is doing,
+rather it's part of the physical simulation.  The simulation is going to
+guarantee to the savage goroutine (the goroutine, not really the savage) that
+the main goroutine will hold on to the sent `watch` channel and respond when
+there is something in the pot.  It holds on to it with the `waiting` slice.
+
+Next we're more directly modeling the cook.  The receipt of a value on the
+`wake` channel (ignoring the value -- the value was the line-of-sight thing
+for the physical simulation); the receipt of a value is a "wake up!" message
+to the cook.  If he's already awake, he ignores this!  If he wasn't, first
+he wakes up, then critically, he fact checks that the pot is indeed empty.
+This was a synchronization constraint given in the book, and one we actually
+need to check here because of the crazy amount of concurrency we allow.
+
+If the cook sees the pot non-empty, he's not happy and goes back to sleep, but
+look what we need to do with the physical simulation.  We're guaranteeing to
+the sender of that last `wake` message that we will report back when the pot
+is non-empty.  We have to do that now with a send on the sent `watch` channel.
+The value sent doesn't matter; it's a dummy value.  Further, we just added
+this watch channel to the `waiting` list.  We have to back that out now.
+
+Well, that case is going to be pretty rare, especially with the sleep values
+in the program.  It's the "else" clause that we're executing now with this
+first "wake" message to the cook.  The program reports that the cook is awake
+and cooking, then gives a non-nil value to `stew`.  The result of `time.After`
+is a channel on which a message will be sent after the specified duration.
+Now our select statement really can receive either of two messages.
+
+Other savage goroutines can concurrently go through the same motions and can
+send their `watch` channels on the `wait` channel.  They will be handled in
+the same way and added to the `waiting` list until the `stew` timer expires
+and sends its message.  (The sent message value is in fact the current time of
+day.  We ignore it.)
+
+The `stew` handler increments the total number of pots cooked, for the
+for the simulation limit, and outputs a message that the cook is filling the
+pot.  It can then do a blind `atomic.Store`.  It can do this because we
+checked that the pot was empty before we set the "kitchen timer".  If was
+empty then, it's still empty now.  For the simulation we must make good on
+the promise to make each waiting goroutine "see" that the pot is non-empty.
+We send a dummy value on each waiting channel then clear the list.
+
+Now if the simulation limit on number of pots is reached, there's a short
+sequence to end the simulation.  There's a message that the cook isn't going
+to be cooking any more, and then a wait for all prepared servings to be
+consumed.
+
+In this case though, the cook has just cooked his first pot.  He sleeps and
+the event loop loops.
+
+Look back in the savage code.  There's a little bit of code I haven't covered
+yet.  Earlier the pot was empty and the savage woke the cook by sending on the
+`wake` channel.  We saw the sent `watch` channel received in main(), put on
+the `waiting` list until the pot was filled, then a dummy value returned on
+the `watch` channel.  The next line in the savage goroutine is blocked on
+receive on this channel until the dummy value is sent.  Receipt of the dummy
+value at this time models the savage "seeing" the pot non-empty.  It's time
+for the savage to try again at getting a serving from the pot.  He may not
+succeed!  Unlike the book solution, he is not exclusively engaged with the
+cook and has no place at the head of any line.  When the cook fills the pot
+it can be a mad scramble of waiting savages to attempt to get a serving from
+the pot.  If there are more savages waiting than the capacity (`M`) of the pot,
+some of them are going to miss out.
+
+Our savage succeeds when the value returned from `atomic.AddInt64(&pot, -1) is
+non-negative.  (A zero means he got the last serving and the pot is now empty,
+but he doesn't care; he got his.)  This is the condition to break out of the
+inner loop.  A message reports that the savage eats, a little time is allowed
+to pass, representing the time it takes him to eat, and the eating is recorded
+for the purpose of ultimately ending the simulation.
+
+----
+$ go run -race atomic.go
+2018/02/08 00:14:45 savage 1 out hunting/gathering
+2018/02/08 00:14:45 savage 2 out hunting/gathering
+2018/02/08 00:14:45 savage 6 out hunting/gathering
+2018/02/08 00:14:45 savage 5 out hunting/gathering
+2018/02/08 00:14:45 savage 4 out hunting/gathering
+2018/02/08 00:14:45 savage 3 out hunting/gathering
+2018/02/08 00:14:45 savage 4 hungry, returns to camp
+2018/02/08 00:14:45 savage 4 finds pot empty, yells for cook
+2018/02/08 00:14:45 cook awake, starts cooking
+2018/02/08 00:14:45 cook puts 4 servings in pot (1 pots cooked)
+2018/02/08 00:14:45 cook sleeps
+2018/02/08 00:14:45 savage 4 eats (leaving 3 servings in pot)
+2018/02/08 00:14:45 savage 4 out hunting/gathering
+2018/02/08 00:14:45 savage 3 hungry, returns to camp
+2018/02/08 00:14:45 savage 3 eats (leaving 2 servings in pot)
+2018/02/08 00:14:45 savage 4 hungry, returns to camp
+2018/02/08 00:14:45 savage 4 eats (leaving 1 servings in pot)
+2018/02/08 00:14:45 savage 4 out hunting/gathering
+2018/02/08 00:14:45 savage 6 hungry, returns to camp
+2018/02/08 00:14:45 savage 3 out hunting/gathering
+2018/02/08 00:14:45 savage 6 eats (leaving 0 servings in pot)
+2018/02/08 00:14:45 savage 1 hungry, returns to camp
+2018/02/08 00:14:45 savage 1 finds pot empty, yells for cook
+2018/02/08 00:14:45 cook awake, starts cooking
+2018/02/08 00:14:45 savage 6 out hunting/gathering
+2018/02/08 00:14:45 cook puts 4 servings in pot (2 pots cooked)
+2018/02/08 00:14:45 cook sleeps
+2018/02/08 00:14:45 savage 1 eats (leaving 3 servings in pot)
+2018/02/08 00:14:45 savage 2 hungry, returns to camp
+2018/02/08 00:14:45 savage 2 eats (leaving 2 servings in pot)
+2018/02/08 00:14:45 savage 1 out hunting/gathering
+2018/02/08 00:14:45 savage 5 hungry, returns to camp
+2018/02/08 00:14:45 savage 2 out hunting/gathering
+2018/02/08 00:14:45 savage 5 eats (leaving 1 servings in pot)
+2018/02/08 00:14:45 savage 5 out hunting/gathering
+2018/02/08 00:14:45 savage 5 hungry, returns to camp
+2018/02/08 00:14:45 savage 5 eats (leaving 0 servings in pot)
+2018/02/08 00:14:45 savage 4 hungry, returns to camp
+2018/02/08 00:14:45 savage 4 finds pot empty, yells for cook
+2018/02/08 00:14:45 savage 5 out hunting/gathering
+2018/02/08 00:14:45 cook awake, starts cooking
+2018/02/08 00:14:45 cook puts 4 servings in pot (3 pots cooked)
+2018/02/08 00:14:45 cook leaves
+2018/02/08 00:14:45 savage 4 eats (leaving 3 servings in pot)
+2018/02/08 00:14:45 savage 6 hungry, returns to camp
+2018/02/08 00:14:45 savage 4 out hunting/gathering
+2018/02/08 00:14:45 savage 6 eats (leaving 2 servings in pot)
+2018/02/08 00:14:45 savage 3 hungry, returns to camp
+2018/02/08 00:14:45 savage 3 eats (leaving 1 servings in pot)
+2018/02/08 00:14:45 savage 6 out hunting/gathering
+2018/02/08 00:14:45 savage 1 hungry, returns to camp
+2018/02/08 00:14:45 savage 1 eats (leaving 0 servings in pot)
+2018/02/08 00:14:45 savage 3 out hunting/gathering
+2018/02/08 00:14:45 simulation ends
+2018/02/08 00:14:45 savage 1 out hunting/gathering
+2018/02/08 00:14:45 savage 2 hungry, returns to camp
+2018/02/08 00:14:45 savage 2 finds pot empty, yells for cook
+2018/02/08 00:14:45 savage 4 hungry, returns to camp
+2018/02/08 00:14:45 savage 4 finds pot empty, yells for cook
+2018/02/08 00:14:45 savage 5 hungry, returns to camp
+2018/02/08 00:14:45 savage 5 finds pot empty, yells for cook
+2018/02/08 00:14:45 savage 6 hungry, returns to camp
+2018/02/08 00:14:45 savage 6 finds pot empty, yells for cook
+2018/02/08 00:14:45 savage 3 hungry, returns to camp
+2018/02/08 00:14:45 savage 3 finds pot empty, yells for cook
+2018/02/08 00:14:45 savage 1 hungry, returns to camp
+2018/02/08 00:14:45 savage 1 finds pot empty, yells for cook
+----
+
+Well, so, it seems the race detector keeps the savage goroutines running until
+they block, even after main returns.  Without -race, the program terminates
+rather sooner after the message "simulation ends".
+
+And there are some lines of code that don't normally get executed, in
+in particular the lines where the cook is awaked to find the pot non-empty.
+To see these we can comment out the sleep statements for "hunting/gathering"
+and for the time "eating".  This is going to cause max pressure on the cook,
+and max contention between the goroutines.  The output is crazy as the Go
+scheduler switches between goroutines on every synchronization operation and
+every output statement, returning to them in random order.  Puzzle it out
+though, and everything happens, it's just that output from concurrent
+goroutines can come from any of the goroutines in any order.
+
+----
+$ go run -race nosleep.go
+2018/02/08 00:27:02 savage 1 hungry
+2018/02/08 00:27:02 savage 1 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 2 hungry
+2018/02/08 00:27:02 cook awake, starts cooking
+2018/02/08 00:27:02 savage 2 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 3 hungry
+2018/02/08 00:27:02 savage 4 hungry
+2018/02/08 00:27:02 savage 5 hungry
+2018/02/08 00:27:02 savage 4 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 5 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 1 waiting to see full pot
+2018/02/08 00:27:02 savage 3 finds pot empty, yells for cook
+2018/02/08 00:27:02 cook puts 4 servings in pot (1 pots cooked)
+2018/02/08 00:27:02 savage 2 waiting to see full pot
+2018/02/08 00:27:02 savage 2 sees servings in pot
+2018/02/08 00:27:02 savage 2 eats (leaving 3 servings in pot)
+2018/02/08 00:27:02 savage 6 hungry
+2018/02/08 00:27:02 cook sleeps
+2018/02/08 00:27:02 savage 2 hungry
+2018/02/08 00:27:02 savage 4 waiting to see full pot
+2018/02/08 00:27:02 savage 1 sees servings in pot
+2018/02/08 00:27:02 savage 1 eats (leaving 0 servings in pot)
+2018/02/08 00:27:02 savage 1 hungry
+2018/02/08 00:27:02 savage 6 eats (leaving 2 servings in pot)
+2018/02/08 00:27:02 cook grumbles, goes back to sleep
+2018/02/08 00:27:02 cook awake, starts cooking
+2018/02/08 00:27:02 savage 2 eats (leaving 1 servings in pot)
+2018/02/08 00:27:02 savage 5 waiting to see full pot
+2018/02/08 00:27:02 savage 1 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 1 waiting to see full pot
+2018/02/08 00:27:02 savage 6 hungry
+2018/02/08 00:27:02 savage 6 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 6 waiting to see full pot
+2018/02/08 00:27:02 savage 2 hungry
+2018/02/08 00:27:02 savage 2 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 3 waiting to see full pot
+2018/02/08 00:27:02 savage 4 sees servings in pot
+2018/02/08 00:27:02 savage 4 finds pot empty, yells for cook
+2018/02/08 00:27:02 cook puts 4 servings in pot (2 pots cooked)
+2018/02/08 00:27:02 cook sleeps
+2018/02/08 00:27:02 savage 5 sees servings in pot
+2018/02/08 00:27:02 savage 3 sees servings in pot
+2018/02/08 00:27:02 savage 3 eats (leaving 2 servings in pot)
+2018/02/08 00:27:02 savage 2 waiting to see full pot
+2018/02/08 00:27:02 cook grumbles, goes back to sleep
+2018/02/08 00:27:02 savage 5 eats (leaving 3 servings in pot)
+2018/02/08 00:27:02 savage 5 hungry
+2018/02/08 00:27:02 cook grumbles, goes back to sleep
+2018/02/08 00:27:02 savage 1 sees servings in pot
+2018/02/08 00:27:02 savage 1 eats (leaving 0 servings in pot)
+2018/02/08 00:27:02 savage 3 hungry
+2018/02/08 00:27:02 savage 1 hungry
+2018/02/08 00:27:02 savage 3 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 2 sees servings in pot
+2018/02/08 00:27:02 savage 2 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 5 eats (leaving 1 servings in pot)
+2018/02/08 00:27:02 savage 5 hungry
+2018/02/08 00:27:02 savage 5 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 4 waiting to see full pot
+2018/02/08 00:27:02 savage 6 sees servings in pot
+2018/02/08 00:27:02 cook awake, starts cooking
+2018/02/08 00:27:02 savage 3 waiting to see full pot
+2018/02/08 00:27:02 savage 6 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 5 waiting to see full pot
+2018/02/08 00:27:02 savage 4 sees servings in pot
+2018/02/08 00:27:02 savage 4 finds pot empty, yells for cook
+2018/02/08 00:27:02 cook puts 4 servings in pot (3 pots cooked)
+2018/02/08 00:27:02 savage 2 waiting to see full pot
+2018/02/08 00:27:02 savage 2 sees servings in pot
+2018/02/08 00:27:02 savage 3 sees servings in pot
+2018/02/08 00:27:02 savage 3 eats (leaving 2 servings in pot)
+2018/02/08 00:27:02 savage 1 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 5 sees servings in pot
+2018/02/08 00:27:02 savage 5 eats (leaving 1 servings in pot)
+2018/02/08 00:27:02 savage 5 hungry
+2018/02/08 00:27:02 savage 5 eats (leaving 0 servings in pot)
+2018/02/08 00:27:02 savage 5 hungry
+2018/02/08 00:27:02 savage 2 eats (leaving 3 servings in pot)
+2018/02/08 00:27:02 savage 2 hungry
+2018/02/08 00:27:02 savage 2 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 6 waiting to see full pot
+2018/02/08 00:27:02 savage 3 hungry
+2018/02/08 00:27:02 savage 3 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 5 finds pot empty, yells for cook
+2018/02/08 00:27:02 savage 6 sees servings in pot
+2018/02/08 00:27:02 cook leaves
+2018/02/08 00:27:02 savage 6 finds pot empty, yells for cook
+2018/02/08 00:27:02 simulation ends
+----
+
+Huh.  Without sleeps in the savage goroutines, the simulation ends promptly!
