@@ -1,0 +1,243 @@
+# 5.2 Barbershop
+
+## book.go
+
+Book solution with semaphores.  I added some output to show what's going on and
+added a WaitGroup to run simulation for a specified total number of customers.
+
+----
+$ go run -race book.go
+2018/02/08 18:55:30 customer 1 arrives, sees 0 customers in shop
+2018/02/08 18:55:30 customer 1 waits
+2018/02/08 18:55:30 barber sleeping
+2018/02/08 18:55:30 barber cutting hair
+2018/02/08 18:55:30 customer 2 arrives, sees 1 customers in shop
+2018/02/08 18:55:30 customer 2 waits
+2018/02/08 18:55:30 customer 3 arrives, sees 2 customers in shop
+2018/02/08 18:55:30 customer 3 waits
+2018/02/08 18:55:30 customer 1 gets hair cut
+2018/02/08 18:55:30 customer 4 arrives, sees 3 customers in shop
+2018/02/08 18:55:30 barber sleeping
+2018/02/08 18:55:30 barber cutting hair
+2018/02/08 18:55:30 customer 4 waits
+2018/02/08 18:55:30 customer 2 gets hair cut
+2018/02/08 18:55:30 customer 5 arrives, sees 4 customers in shop
+2018/02/08 18:55:30 customer 5 finds shop full, leaves
+2018/02/08 18:55:30 barber sleeping
+2018/02/08 18:55:30 customer 6 arrives, sees 4 customers in shop
+2018/02/08 18:55:30 customer 6 finds shop full, leaves
+2018/02/08 18:55:30 barber cutting hair
+2018/02/08 18:55:30 customer 3 gets hair cut
+2018/02/08 18:55:30 customer 1 leaves with fresh hair cut
+2018/02/08 18:55:30 customer 2 leaves with fresh hair cut
+2018/02/08 18:55:30 customer 3 leaves with fresh hair cut
+2018/02/08 18:55:30 barber sleeping
+2018/02/08 18:55:30 barber cutting hair
+2018/02/08 18:55:30 customer 4 gets hair cut
+2018/02/08 18:55:30 barber sleeping
+2018/02/08 18:55:30 customer 4 leaves with fresh hair cut
+----
+
+## mutex.go
+
+First non-semaphore version, but otherwise few changes from the book
+presentation.  One significant change is that instead of using the `customer`
+channel for synchronization only, I send the customer number on the channel.
+This allows the barber goroutine to output a message saying which customer
+the barber is serving.  It's an example of using a channel to both
+synchronize and communicate and it makes the simulation more realistic.
+
+----
+$ go run -race mutex.go
+2018/02/08 19:32:43 customer 1 arrives, sees 0 customers in shop
+2018/02/08 19:32:43 customer 1 waits
+2018/02/08 19:32:43 customer 2 arrives, sees 1 customers in shop
+2018/02/08 19:32:43 customer 2 waits
+2018/02/08 19:32:43 barber sleeping
+2018/02/08 19:32:43 customer 3 arrives, sees 2 customers in shop
+2018/02/08 19:32:43 customer 3 waits
+2018/02/08 19:32:43 barber wakes and seats customer 1
+2018/02/08 19:32:43 customer 4 arrives, sees 3 customers in shop
+2018/02/08 19:32:43 customer 1 gets hair cut
+2018/02/08 19:32:43 barber cutting customer 1's hair
+2018/02/08 19:32:43 customer 4 waits
+2018/02/08 19:32:43 barber sleeping
+2018/02/08 19:32:43 barber wakes and seats customer 2
+2018/02/08 19:32:43 customer 2 gets hair cut
+2018/02/08 19:32:43 customer 5 arrives, sees 4 customers in shop
+2018/02/08 19:32:43 customer 5 finds shop full, leaves
+2018/02/08 19:32:43 customer 6 arrives, sees 4 customers in shop
+2018/02/08 19:32:43 customer 6 finds shop full, leaves
+2018/02/08 19:32:43 customer 1 leaves with fresh hair cut
+2018/02/08 19:32:43 barber cutting customer 2's hair
+2018/02/08 19:32:43 customer 2 leaves with fresh hair cut
+2018/02/08 19:32:43 barber sleeping
+2018/02/08 19:32:43 barber wakes and seats customer 3
+2018/02/08 19:32:43 customer 3 gets hair cut
+2018/02/08 19:32:43 barber cutting customer 3's hair
+2018/02/08 19:32:43 customer 3 leaves with fresh hair cut
+2018/02/08 19:32:43 barber sleeping
+2018/02/08 19:32:43 barber wakes and seats customer 4
+2018/02/08 19:32:43 barber cutting customer 4's hair
+2018/02/08 19:32:43 customer 4 gets hair cut
+2018/02/08 19:32:43 barber sleeping
+2018/02/08 19:32:43 customer 4 leaves with fresh hair cut
+----
+
+## m2.go
+
+Still a mutex-based version, it's mutex.go with some improvements.
+
+First, in mutex.go, the channel pair `customer` and `barber` is overkill.
+An single unbuffered channel in Go does a rendezvous so the pair can be
+replaced with a single channel.  I called the single channel `barberRoom`
+and had the customer send his customer number on the channel.  It models a
+customer entering the barber room.  Similarly I replaced the mutex.go pair
+`customerDone` and `barberDone` with the single channel `cutDone`.  The
+barber sends a dummy message on this channel to mark the end of the hair cut.
+
+In mutex.go, main() starts all all customer goroutines before falling into
+the barber loop.  The customer goroutines all queue up in order on the mutex
+making for a predictable sequence of events.  In m2, I start a goroutine to
+run the loop of creating customer goroutines.  This allows the barber loop to
+start running without waiting for all of the customer goroutines to be created.
+I also added a short sleep to represent some time that it takes for a haircut.
+
+----
+$ go run -race m2.go
+2018/02/08 20:00:03 barber sleeping
+2018/02/08 20:00:03 customer 1 arrives, sees 0 customers in shop
+2018/02/08 20:00:03 customer 1 waits
+2018/02/08 20:00:03 customer 2 arrives, sees 1 customers in shop
+2018/02/08 20:00:03 customer 2 waits
+2018/02/08 20:00:03 barber wakes, cuts customer 1's hair
+2018/02/08 20:00:03 customer 3 arrives, sees 2 customers in shop
+2018/02/08 20:00:03 customer 3 waits
+2018/02/08 20:00:03 customer 4 arrives, sees 3 customers in shop
+2018/02/08 20:00:03 customer 4 waits
+2018/02/08 20:00:03 customer 5 arrives, sees 4 customers in shop
+2018/02/08 20:00:03 customer 5 finds shop full, leaves
+2018/02/08 20:00:03 customer 6 arrives, sees 4 customers in shop
+2018/02/08 20:00:03 customer 6 finds shop full, leaves
+2018/02/08 20:00:03 customer 1 getting hair cut
+2018/02/08 20:00:03 customer 1 leaves with fresh hair cut
+2018/02/08 20:00:03 barber sleeping
+2018/02/08 20:00:03 barber wakes, cuts customer 2's hair
+2018/02/08 20:00:03 customer 2 getting hair cut
+2018/02/08 20:00:03 customer 2 leaves with fresh hair cut
+2018/02/08 20:00:03 barber sleeping
+2018/02/08 20:00:03 barber wakes, cuts customer 3's hair
+2018/02/08 20:00:03 customer 3 getting hair cut
+2018/02/08 20:00:03 customer 3 leaves with fresh hair cut
+2018/02/08 20:00:03 barber sleeping
+2018/02/08 20:00:03 barber wakes, cuts customer 4's hair
+2018/02/08 20:00:03 customer 4 getting hair cut
+2018/02/08 20:00:03 customer 4 leaves with fresh hair cut
+2018/02/08 20:00:03 barber sleeping
+----
+
+## select.go
+
+In this version I went for more concurrency and for making the code more
+directly model the problem.  I dropped the mutex on the shop as a whole in
+favor of synchronization on the individual chairs.  This allows customers
+to enter the shop concurrently and sit in available chairs.
+
+Also I addressed the part of the problem description that says "If there are
+no customers to be served, the barber goes to sleep."  In previous solutions,
+the barber sleeps after each customer, even if there are waiting customers.
+In this solution, the barber does not sleep if there are waiting customers.
+
+I'll do the detailed walkthrough again.
+
+In variable assignments at the top of the file, I create separate channels
+for the three waiting room chairs and the barber chair.  The waiting room
+chairs are buffered with length 1 so there is space for one customer to sit
+and so a customer can sit without bothering the barber or anyone else.  The
+barber chair is unbuffered, requiring a rendezvous with the barber.
+
+Skip down to main().  The wg.Wait is in a separate goroutine because there's
+not otherwise a good place for it in the program.  You could have the last
+customer shut things down on his way out but that's not very realistic.
+Also, terminating with `os.Exit` is a little abrupt but it works.  As before
+in `m2.go` I start the customer goroutines in a separate goroutine.  I space
+the customers with a sleep statement here though.  That helps the simulation
+look interesting.
+
+Finally there's the barber event loop.  It's organized in two phases, first
+starting with the barber sleeping, and then a phase with the barber awake.
+The second phase has a loop so the barber can stay awake as he takes a
+succession of customers from the waiting room.  In the first phase, starting
+with the barber sleeping, there's a select statement that blocks until a
+customer is present.  It might seem enough to only receive from the barberChair
+channel, but with the right sequence of concurrent execution a customer might
+decide he must sit in the waiting room while the barber sees the waiting room
+empty and decides to sleep.  When the customer then sits in the waiting room,
+we don't want him to sit indefinitely while the barber sleeps.  After the
+barber wakes on that top select statement and and serves one customer,
+execution drops into the second phase where the barber is awake.  In this
+inner loop he takes customers from the waiting room only.  When the waiting
+room finally empties, the default case breaks the inner loop, ending the second
+phase and looping back to the first phase representing the barber sleeping.
+
+Now the customer goroutine.  Recall that in a groutine started from main()
+we start a separate goroutine for each customer.  Thus there is no loop in
+the customer goroutine.  A customer just wants one haircut.  His first choice
+is to find the barber idle and be able to go directly to the barber chair.
+If the barber chair is occupied with a customer however, the send (on the
+unbuffered channel) cannot proceed and the select default case is taken.
+Here's a second select.  Hopefully a send to one of the (buffered) waiting
+room chairs can proceed and the customer can wait.  If not, that means the
+barber chair and all three waiting room chairs are occupied.  In the default
+case of this second select, the customer leaves without a haircut.
+
+----
+$ go run -race select.go
+2018/02/08 22:18:35 barber sleeping
+2018/02/08 22:18:35 customer 1 happy to find barber free
+2018/02/08 22:18:35 barber wakes and takes customer 1
+2018/02/08 22:18:35 customer 2 waits
+2018/02/08 22:18:35 customer 3 waits
+2018/02/08 22:18:35 customer 4 waits
+2018/02/08 22:18:35 customer 5 finds shop full, leaves
+2018/02/08 22:18:35 customer 6 finds shop full, leaves
+2018/02/08 22:18:35 barber takes waiting customer 3
+2018/02/08 22:18:35 barber takes waiting customer 4
+2018/02/08 22:18:35 barber takes waiting customer 2
+2018/02/08 22:18:35 barber sleeping
+----
+
+## reflect.go
+
+In reflect.go I go to great pains to correct one little deficiency of
+`select.go`.  The problem statement starts "A barbershop consists of a waiting
+room with _n_ chairs..." but in `select.go`, there is no _n_.  We hard coded
+three waiting room chairs with various lines of code duplicated three times.
+The duplication is unsatisfying and by some strict interpretation of the
+problem statement, it's cheating.
+
+Well, the Go select statement doesn't allow for selecting on a dynamic
+data structure such as a slice of channels.  The language designers consiously
+left that feature out because it could be deceptively expensive.  There's a
+workaround.  It's even more expensive, but we don't care because we have a
+small number of cases and because we're just doing a silly little simulation.
+The workaround is to use the reflect package to construct a whole select
+statement dyanmically.  Code using the reflect package tends to look rather
+verbose.  It takes a few lines of code to specify for the reflect package just
+what you are constructing.  Nevertheless, it works, it's kind of cool.
+
+----
+$ go run -race reflect.go
+2018/02/08 22:33:22 barber sleeping
+2018/02/08 22:33:22 customer 1 happy to find barber free
+2018/02/08 22:33:22 barber wakes and takes customer 1
+2018/02/08 22:33:22 customer 2 waits
+2018/02/08 22:33:22 customer 3 waits
+2018/02/08 22:33:22 customer 4 waits
+2018/02/08 22:33:22 customer 5 finds shop full, leaves
+2018/02/08 22:33:22 customer 6 finds shop full, leaves
+2018/02/08 22:33:22 barber takes waiting customer 4
+2018/02/08 22:33:22 barber takes waiting customer 2
+2018/02/08 22:33:22 barber takes waiting customer 3
+2018/02/08 22:33:22 barber sleeping
+----
