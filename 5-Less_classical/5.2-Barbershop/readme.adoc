@@ -96,13 +96,6 @@ customer entering the barber room.  Similarly I replaced the `mutex.go` pair
 `customerDone` and `barberDone` with the single channel `cutDone`.  The
 barber sends a dummy message on this channel to mark the end of the hair cut.
 
-In `mutex.go`, main() starts all all customer goroutines before falling into
-the barber loop.  The customer goroutines all queue up in order on the mutex
-making for a predictable sequence of events.  In m2, I start a goroutine to
-run the loop of creating customer goroutines.  This allows the barber loop to
-start running without waiting for all of the customer goroutines to be created.
-I also added a short sleep to represent some time that it takes for a haircut.
-
 ----
 $ go run -race m2.go
 2018/02/08 20:00:03 barber sleeping
@@ -156,17 +149,14 @@ chairs are buffered with length 1 so there is space for one customer to sit
 and so a customer can sit without bothering the barber or anyone else.  The
 barber chair is unbuffered, requiring a rendezvous with the barber.
 
-Skip down to main().  The wg.Wait is in a separate goroutine because there's
-not otherwise a good place for it in the program.  You could have the last
-customer shut things down on his way out but that's not very realistic.
-Also, terminating with `os.Exit` is a little abrupt but it works.  As before
-in `m2.go` I start the customer goroutines in a separate goroutine.  I space
-the customers with a sleep statement here though.  That helps the simulation
-look interesting.
+Main() is pretty simple.  It initializes the WaitGroup, starts the barber,
+then starts the customers, spaced out a little to help the simulation look
+interesting.  It waits for the customers to finish, one way or another,
+and that's it.
 
-Finally there's the barber event loop.  It's organized in two phases, first
-starting with the barber sleeping, and then a phase with the barber awake.
-The second phase has a loop so the barber can stay awake as he takes a
+The barber goroutine is just an event loop.  It's organized in two phases,
+first starting with the barber sleeping, and then a phase with the barber
+awake.  The second phase has a loop so the barber can stay awake as he takes a
 succession of customers from the waiting room.  In the first phase, starting
 with the barber sleeping, there's a select statement that blocks until a
 customer is present.  It might seem enough to only receive from the barberChair
@@ -180,16 +170,16 @@ inner loop he takes customers from the waiting room only.  When the waiting
 room finally empties, the default case breaks the inner loop, ending the second
 phase and looping back to the first phase representing the barber sleeping.
 
-Now the customer goroutine.  Recall that in a groutine started from main()
-we start a separate goroutine for each customer.  Thus there is no loop in
-the customer goroutine.  A customer just wants one haircut.  His first choice
-is to find the barber idle and be able to go directly to the barber chair.
-If the barber chair is occupied with a customer however, the send (on the
-unbuffered channel) cannot proceed and the select default case is taken.
-Here's a second select.  Hopefully a send to one of the (buffered) waiting
-room chairs can proceed and the customer can wait.  If not, that means the
-barber chair and all three waiting room chairs are occupied.  In the default
-case of this second select, the customer leaves without a haircut.
+Now the customer goroutine.  Recall that in main() we start a separate
+goroutine for each customer.  Thus there is no loop in the customer goroutine.
+A customer just wants one haircut.  His first choice is to find the barber idle
+and be able to go directly to the barber chair.  If the barber chair is
+occupied with a customer however, the send (on the unbuffered channel) cannot
+proceed and the select default case is taken.  Here's a second select.
+Hopefully a send to one of the (buffered) waiting room chairs can proceed
+and the customer can wait.  If not, that means the barber chair and all three
+waiting room chairs are occupied.  In the default case of this second select,
+the customer leaves without a haircut.
 
 ----
 $ go run -race select.go

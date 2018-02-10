@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 )
 
@@ -17,6 +16,29 @@ var (
 )
 
 var wg sync.WaitGroup
+
+const nCust = 6
+
+func main() {
+	wg.Add(nCust)
+	go barberFunc()
+	for i := 1; i <= nCust; i++ {
+		go customerFunc(i)
+	}
+	wg.Wait()
+}
+
+func barberFunc() {
+	for {
+		log.Print("barber sleeping")
+		c := <-customer
+		log.Print("barber wakes and seats customer ", c)
+		barber <- 1
+		log.Printf("barber cutting customer %d's hair", c)
+		<-customerDone
+		barberDone <- 1
+	}
+}
 
 func customerFunc(c int) {
 	mutex.Lock()
@@ -41,26 +63,4 @@ func customerFunc(c int) {
 	mutex.Unlock()
 	log.Print("customer ", c, " leaves with fresh hair cut")
 	wg.Done()
-}
-
-const nCust = 6
-
-func main() {
-	wg.Add(nCust)
-	go func() {
-		wg.Wait()
-		os.Exit(0)
-	}()
-	for i := 1; i <= nCust; i++ {
-		go customerFunc(i)
-	}
-	for {
-		log.Print("barber sleeping")
-		c := <-customer
-		log.Print("barber wakes and seats customer ", c)
-		barber <- 1
-		log.Printf("barber cutting customer %d's hair", c)
-		<-customerDone
-		barberDone <- 1
-	}
 }

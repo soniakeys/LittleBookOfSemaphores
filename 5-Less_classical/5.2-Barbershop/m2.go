@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 	"time"
 )
@@ -23,6 +22,24 @@ var cutDone = make(chan int)
 
 // counts customers as they leave shop
 var wg sync.WaitGroup
+
+func main() {
+	wg.Add(nCust)
+	go barber()
+	for c := 1; c <= nCust; c++ {
+		go customer(c)
+	}
+	wg.Wait()
+}
+
+func barber() {
+	for {
+		log.Print("barber sleeping")
+		c := <-barberRoom
+		log.Printf("barber wakes, cuts customer %d's hair", c)
+		cutDone <- 1
+	}
+}
 
 func customer(c int) {
 	mutex.Lock()
@@ -46,23 +63,4 @@ func customer(c int) {
 	mutex.Unlock()
 	log.Print("customer ", c, " leaves with fresh hair cut")
 	wg.Done()
-}
-
-func main() {
-	wg.Add(nCust)
-	go func() {
-		wg.Wait()
-		os.Exit(0)
-	}()
-	go func() {
-		for c := 1; c <= nCust; c++ {
-			go customer(c)
-		}
-	}()
-	for {
-		log.Print("barber sleeping")
-		c := <-barberRoom
-		log.Printf("barber wakes, cuts customer %d's hair", c)
-		cutDone <- 1
-	}
 }

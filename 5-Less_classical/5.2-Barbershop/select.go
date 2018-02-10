@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 )
@@ -14,40 +13,19 @@ var waitingRoomChair3 = make(chan int, 1)
 var barberChair = make(chan int)
 var wg sync.WaitGroup
 
-func customerFunc(c int) {
-	time.Sleep(1e6)
-	select {
-	case barberChair <- c:
-		log.Print("customer ", c, " happy to find barber free")
-	default:
-		select {
-		case waitingRoomChair1 <- c:
-			log.Print("customer ", c, " waits")
-		case waitingRoomChair2 <- c:
-			log.Print("customer ", c, " waits")
-		case waitingRoomChair3 <- c:
-			log.Print("customer ", c, " waits")
-		default:
-			log.Print("customer ", c, " finds shop full, leaves")
-			wg.Done()
-		}
-	}
-}
-
 const nCust = 6
 
 func main() {
 	wg.Add(nCust)
-	go func() {
-		wg.Wait()
-		os.Exit(0)
-	}()
-	go func() {
-		for c := 1; c <= nCust; c++ {
-			go customerFunc(c)
-			time.Sleep(time.Duration(rand.Intn(1e7)))
-		}
-	}()
+	go barber()
+	for c := 1; c <= nCust; c++ {
+		go customer(c)
+		time.Sleep(time.Duration(rand.Intn(1e7)))
+	}
+	wg.Wait()
+}
+
+func barber() {
 	var c int
 	for {
 		log.Print("barber sleeping")
@@ -71,6 +49,26 @@ func main() {
 			}
 			log.Print("barber takes waiting customer ", c)
 			time.Sleep(1e8)
+			wg.Done()
+		}
+	}
+}
+
+func customer(c int) {
+	time.Sleep(1e6)
+	select {
+	case barberChair <- c:
+		log.Print("customer ", c, " happy to find barber free")
+	default:
+		select {
+		case waitingRoomChair1 <- c:
+			log.Print("customer ", c, " waits")
+		case waitingRoomChair2 <- c:
+			log.Print("customer ", c, " waits")
+		case waitingRoomChair3 <- c:
+			log.Print("customer ", c, " waits")
+		default:
+			log.Print("customer ", c, " finds shop full, leaves")
 			wg.Done()
 		}
 	}

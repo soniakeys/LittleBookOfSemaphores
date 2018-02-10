@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 
 	"github.com/soniakeys/LittleBookOfSemaphores/sem"
@@ -19,6 +18,32 @@ var (
 )
 
 var wg sync.WaitGroup
+
+const nCust = 6
+
+func main() {
+	wg.Add(nCust)
+	go barberFunc()
+	for i := 1; i <= nCust; i++ {
+		go customerFunc(i)
+	}
+	wg.Wait()
+}
+
+func barberFunc() {
+	for {
+		log.Print("barber sleeping")
+
+		customer.Wait()
+		barber.Signal()
+
+		// cutHair ()
+		log.Print("barber cutting hair")
+
+		customerDone.Wait()
+		barberDone.Signal()
+	}
+}
 
 func customerFunc(c int) {
 	mutex.Wait()
@@ -52,29 +77,4 @@ func customerFunc(c int) {
 
 func balk() {
 	select {}
-}
-
-const nCust = 6
-
-func main() {
-	wg.Add(nCust)
-	go func() {
-		wg.Wait()
-		os.Exit(0)
-	}()
-	for i := 1; i <= nCust; i++ {
-		go customerFunc(i)
-	}
-	for {
-		log.Print("barber sleeping")
-
-		customer.Wait()
-		barber.Signal()
-
-		// cutHair ()
-		log.Print("barber cutting hair")
-
-		customerDone.Wait()
-		barberDone.Signal()
-	}
 }
