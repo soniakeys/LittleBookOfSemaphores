@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 
 	"github.com/soniakeys/LittleBookOfSemaphores/sem"
@@ -56,17 +55,7 @@ func balk() {
 	select {}
 }
 
-const nCust = 6
-
-func main() {
-	wg.Add(nCust)
-	go func() {
-		wg.Wait()
-		os.Exit(0)
-	}()
-	for i := 1; i <= nCust; i++ {
-		go customerFunc(i)
-	}
+func barberFunc() {
 	for {
 		log.Print("barber sleeping")
 
@@ -84,4 +73,15 @@ func main() {
 		customerDone.Wait()
 		barberDone.Signal()
 	}
+}
+
+const nCust = 6
+
+func main() {
+	wg.Add(nCust)
+	go barberFunc()
+	for i := 1; i <= nCust; i++ {
+		go customerFunc(i)
+	}
+	wg.Wait()
 }

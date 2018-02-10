@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 )
@@ -14,7 +13,7 @@ var waitingRoom = make(chan int, n)
 var barberRoom = make(chan int)
 var wg sync.WaitGroup
 
-func customerFunc(c int) {
+func customer(c int) {
 	time.Sleep(1e6)
 	select {
 	case barberRoom <- c:
@@ -30,20 +29,7 @@ func customerFunc(c int) {
 	}
 }
 
-const nCust = 6
-
-func main() {
-	wg.Add(nCust)
-	go func() {
-		wg.Wait()
-		os.Exit(0)
-	}()
-	go func() {
-		for c := 1; c <= nCust; c++ {
-			go customerFunc(c)
-			time.Sleep(time.Duration(rand.Intn(1e7)))
-		}
-	}()
+func barber() {
 	var c int
 	for {
 		log.Print("barber sleeping")
@@ -66,4 +52,16 @@ func main() {
 			}
 		}
 	}
+}
+
+const nCust = 6
+
+func main() {
+	wg.Add(nCust)
+	go barber()
+	for c := 1; c <= nCust; c++ {
+		go customer(c)
+		time.Sleep(time.Duration(rand.Intn(1e7)))
+	}
+	wg.Wait()
 }
