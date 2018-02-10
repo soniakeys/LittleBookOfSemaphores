@@ -1,0 +1,61 @@
+# 5.3 FIFO Barbershop
+
+## book.go
+
+As usual, output added, limits added.
+
+----
+$ go run -race book.go
+2018/02/09 21:32:35 customer 1 arrives, sees 0 customers in shop
+2018/02/09 21:32:35 customer 1 waits
+2018/02/09 21:32:35 customer 2 arrives, sees 1 customers in shop
+2018/02/09 21:32:35 customer 2 waits
+2018/02/09 21:32:35 barber sleeping
+2018/02/09 21:32:35 customer 3 arrives, sees 2 customers in shop
+2018/02/09 21:32:35 customer 3 waits
+2018/02/09 21:32:35 customer 4 arrives, sees 3 customers in shop
+2018/02/09 21:32:35 customer 4 waits
+2018/02/09 21:32:35 customer 5 arrives, sees 4 customers in shop
+2018/02/09 21:32:35 customer 5 finds shop full, leaves
+2018/02/09 21:32:35 customer 6 arrives, sees 4 customers in shop
+2018/02/09 21:32:35 customer 6 finds shop full, leaves
+2018/02/09 21:32:35 barber cutting hair
+2018/02/09 21:32:35 customer 1 gets hair cut
+2018/02/09 21:32:35 barber sleeping
+2018/02/09 21:32:35 customer 1 leaves with fresh hair cut
+2018/02/09 21:32:35 customer 2 gets hair cut
+2018/02/09 21:32:35 barber cutting hair
+2018/02/09 21:32:35 barber sleeping
+2018/02/09 21:32:35 barber cutting hair
+2018/02/09 21:32:35 customer 3 gets hair cut
+2018/02/09 21:32:35 customer 2 leaves with fresh hair cut
+2018/02/09 21:32:35 barber sleeping
+2018/02/09 21:32:35 barber cutting hair
+2018/02/09 21:32:35 customer 3 leaves with fresh hair cut
+2018/02/09 21:32:35 customer 4 gets hair cut
+2018/02/09 21:32:35 barber sleeping
+2018/02/09 21:32:35 customer 4 leaves with fresh hair cut
+----
+
+## buffered.go
+
+No semaphores needed, we use Go buffered channels to serve customers in the
+order they arrive.  Otherwise this version is modeled after
+`5.2-Barbershop/select.go` so the barber does not microsleep when customers
+are waiting.
+
+----
+$ go run -race buffered.go
+2018/02/09 22:58:39 barber sleeping
+2018/02/09 22:58:39 customer 1 happy to find barber free
+2018/02/09 22:58:39 barber wakes and takes customer 1
+2018/02/09 22:58:39 customer 2 waits
+2018/02/09 22:58:39 customer 3 waits
+2018/02/09 22:58:39 customer 4 waits
+2018/02/09 22:58:39 customer 5 finds shop full, leaves
+2018/02/09 22:58:39 customer 6 finds shop full, leaves
+2018/02/09 22:58:39 barber takes waiting customer 2
+2018/02/09 22:58:39 barber takes waiting customer 3
+2018/02/09 22:58:39 barber takes waiting customer 4
+2018/02/09 22:58:39 barber sleeping
+----
