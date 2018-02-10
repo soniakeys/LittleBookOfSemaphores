@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/soniakeys/LittleBookOfSemaphores/sem"
 )
@@ -22,6 +23,48 @@ var (
 )
 
 var wg sync.WaitGroup
+
+const nCust = 25
+
+func main() {
+	wg.Add(nCust)
+	for b := 1; b <= 3; b++ {
+		go barberFunc(b)
+	}
+	for c := 1; c <= nCust; c++ {
+		go customerFunc(c)
+	}
+	wg.Wait()
+}
+
+func barberFunc(b int) {
+	for {
+		log.Print("barber ", b, " sleeping")
+		customer1.Wait()
+		mutex.Wait()
+		s := queue1[0]
+		queue1 = queue1[1:]
+		s.Signal()
+		s.Wait()
+		mutex.Signal()
+
+		customer2.Wait()
+		mutex2.Wait()
+		s = queue2[0]
+		queue2 = queue2[1:]
+		s.Signal()
+		time.Sleep(1e6)
+		mutex2.Signal()
+
+		// cutHair ()
+		log.Print("barber ", b, " cutting hair")
+
+		payment.Wait()
+		// acceptPayment ()
+		log.Print("barber ", b, " accepts payment")
+		receipt.Signal()
+	}
+}
 
 func customerFunc(c int) {
 	s1 := sem.NewChanSem(0, 1)
@@ -71,45 +114,4 @@ func customerFunc(c int) {
 
 func balk() {
 	select {}
-}
-
-func barberFunc(b int) {
-	for {
-		log.Print("barber ", b, " sleeping")
-		customer1.Wait()
-		mutex.Wait()
-		s := queue1[0]
-		queue1 = queue1[1:]
-		s.Signal()
-		s.Wait()
-		mutex.Signal()
-
-		customer2.Wait()
-		mutex2.Wait()
-		s = queue2[0]
-		queue2 = queue2[1:]
-		s.Signal()
-		mutex2.Signal()
-
-		// cutHair ()
-		log.Print("barber ", b, " cutting hair")
-
-		payment.Wait()
-		// acceptPayment ()
-		log.Print("barber ", b, " accepts payment")
-		receipt.Signal()
-	}
-}
-
-const nCust = 25
-
-func main() {
-	wg.Add(nCust)
-	for b := 1; b <= 3; b++ {
-		go barberFunc(b)
-	}
-	for c := 1; c <= nCust; c++ {
-		go customerFunc(c)
-	}
-	wg.Wait()
 }

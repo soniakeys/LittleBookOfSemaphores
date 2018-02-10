@@ -1,0 +1,469 @@
+# 5.4 Hilzer's barbershop
+
+## barber3.go
+
+I found discrepancies between the solution given in version 2.2.1 of the book
+and the website code
+https://github.com/AllenDowney/LittleBookOfSemaphores/blob/master/code/sync_code/barber3.py[barber3.py]
+and found `barber3.py` to better describe a working solution.  Like the typical
+book presentation, the .py file does not give a complele working program or
+even usefully importable Python module but rather key statements of a solution.
+Thus for my implementation I still add my usual mechanism of a working
+simulation.  I added messages and limits and also added a sleep to force
+the shop to fill and some customers to leave.
+
+----
+$ go run -race barber3.go
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 1 arrives, sees 0 customers in shop
+2018/02/10 13:38:43 customer 1 enters waiting area
+2018/02/10 13:38:43 customer 2 arrives, sees 1 customers in shop
+2018/02/10 13:38:43 customer 2 enters waiting area
+2018/02/10 13:38:43 customer 3 arrives, sees 2 customers in shop
+2018/02/10 13:38:43 customer 3 enters waiting area
+2018/02/10 13:38:43 customer 4 arrives, sees 3 customers in shop
+2018/02/10 13:38:43 customer 4 enters waiting area
+2018/02/10 13:38:43 customer 1 sits on sofa
+2018/02/10 13:38:43 customer 1 gets hair cut
+2018/02/10 13:38:43 customer 5 arrives, sees 4 customers in shop
+2018/02/10 13:38:43 customer 5 enters waiting area
+2018/02/10 13:38:43 customer 6 arrives, sees 5 customers in shop
+2018/02/10 13:38:43 customer 6 enters waiting area
+2018/02/10 13:38:43 customer 7 arrives, sees 6 customers in shop
+2018/02/10 13:38:43 customer 7 enters waiting area
+2018/02/10 13:38:43 customer 1 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 customer 2 sits on sofa
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 customer 3 sits on sofa
+2018/02/10 13:38:43 customer 1 leaves with fresh hair cut
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 8 arrives, sees 6 customers in shop
+2018/02/10 13:38:43 customer 8 enters waiting area
+2018/02/10 13:38:43 customer 9 arrives, sees 7 customers in shop
+2018/02/10 13:38:43 customer 2 gets hair cut
+2018/02/10 13:38:43 customer 9 enters waiting area
+2018/02/10 13:38:43 customer 10 arrives, sees 8 customers in shop
+2018/02/10 13:38:43 customer 10 enters waiting area
+2018/02/10 13:38:43 customer 11 arrives, sees 9 customers in shop
+2018/02/10 13:38:43 customer 11 enters waiting area
+2018/02/10 13:38:43 customer 12 arrives, sees 10 customers in shop
+2018/02/10 13:38:43 customer 12 enters waiting area
+2018/02/10 13:38:43 customer 13 arrives, sees 11 customers in shop
+2018/02/10 13:38:43 customer 13 enters waiting area
+2018/02/10 13:38:43 customer 14 arrives, sees 12 customers in shop
+2018/02/10 13:38:43 customer 14 enters waiting area
+2018/02/10 13:38:43 customer 15 arrives, sees 13 customers in shop
+2018/02/10 13:38:43 customer 15 enters waiting area
+2018/02/10 13:38:43 customer 16 arrives, sees 14 customers in shop
+2018/02/10 13:38:43 customer 16 enters waiting area
+2018/02/10 13:38:43 customer 17 arrives, sees 15 customers in shop
+2018/02/10 13:38:43 customer 17 enters waiting area
+2018/02/10 13:38:43 customer 18 arrives, sees 16 customers in shop
+2018/02/10 13:38:43 customer 18 enters waiting area
+2018/02/10 13:38:43 customer 19 arrives, sees 17 customers in shop
+2018/02/10 13:38:43 customer 19 enters waiting area
+2018/02/10 13:38:43 customer 2 pays
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 customer 3 gets hair cut
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 2 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 20 arrives, sees 17 customers in shop
+2018/02/10 13:38:43 customer 20 enters waiting area
+2018/02/10 13:38:43 customer 21 arrives, sees 18 customers in shop
+2018/02/10 13:38:43 customer 21 enters waiting area
+2018/02/10 13:38:43 customer 22 arrives, sees 19 customers in shop
+2018/02/10 13:38:43 customer 22 enters waiting area
+2018/02/10 13:38:43 customer 23 arrives, sees 20 customers in shop
+2018/02/10 13:38:43 customer 23 finds shop full, leaves
+2018/02/10 13:38:43 customer 24 arrives, sees 20 customers in shop
+2018/02/10 13:38:43 customer 24 finds shop full, leaves
+2018/02/10 13:38:43 customer 25 arrives, sees 20 customers in shop
+2018/02/10 13:38:43 customer 25 finds shop full, leaves
+2018/02/10 13:38:43 customer 3 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 4 sits on sofa
+2018/02/10 13:38:43 customer 5 sits on sofa
+2018/02/10 13:38:43 customer 3 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 4 gets hair cut
+2018/02/10 13:38:43 customer 4 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 6 sits on sofa
+2018/02/10 13:38:43 customer 4 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 5 gets hair cut
+2018/02/10 13:38:43 customer 5 pays
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 5 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 7 sits on sofa
+2018/02/10 13:38:43 customer 6 gets hair cut
+2018/02/10 13:38:43 customer 6 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 8 sits on sofa
+2018/02/10 13:38:43 customer 6 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 7 gets hair cut
+2018/02/10 13:38:43 customer 7 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 9 sits on sofa
+2018/02/10 13:38:43 customer 7 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 8 gets hair cut
+2018/02/10 13:38:43 customer 8 pays
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 8 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 9 gets hair cut
+2018/02/10 13:38:43 customer 9 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 customer 10 sits on sofa
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 11 sits on sofa
+2018/02/10 13:38:43 customer 9 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 10 gets hair cut
+2018/02/10 13:38:43 customer 10 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 customer 11 gets hair cut
+2018/02/10 13:38:43 customer 11 pays
+2018/02/10 13:38:43 customer 10 leaves with fresh hair cut
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 customer 12 sits on sofa
+2018/02/10 13:38:43 customer 12 gets hair cut
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 11 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 12 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 customer 13 sits on sofa
+2018/02/10 13:38:43 customer 12 leaves with fresh hair cut
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 13 gets hair cut
+2018/02/10 13:38:43 customer 13 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 13 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 14 sits on sofa
+2018/02/10 13:38:43 customer 15 sits on sofa
+2018/02/10 13:38:43 customer 16 sits on sofa
+2018/02/10 13:38:43 customer 14 gets hair cut
+2018/02/10 13:38:43 customer 14 pays
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 15 gets hair cut
+2018/02/10 13:38:43 customer 14 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 15 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 16 gets hair cut
+2018/02/10 13:38:43 customer 15 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 16 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 17 sits on sofa
+2018/02/10 13:38:43 customer 16 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 18 sits on sofa
+2018/02/10 13:38:43 customer 19 sits on sofa
+2018/02/10 13:38:43 customer 17 gets hair cut
+2018/02/10 13:38:43 customer 17 pays
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 17 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 18 gets hair cut
+2018/02/10 13:38:43 customer 18 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 18 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 19 gets hair cut
+2018/02/10 13:38:43 customer 19 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 19 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 20 sits on sofa
+2018/02/10 13:38:43 customer 21 sits on sofa
+2018/02/10 13:38:43 customer 22 sits on sofa
+2018/02/10 13:38:43 customer 20 gets hair cut
+2018/02/10 13:38:43 customer 20 pays
+2018/02/10 13:38:43 barber 2 cutting hair
+2018/02/10 13:38:43 barber 2 accepts payment
+2018/02/10 13:38:43 barber 2 sleeping
+2018/02/10 13:38:43 customer 20 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 21 gets hair cut
+2018/02/10 13:38:43 customer 21 pays
+2018/02/10 13:38:43 barber 3 cutting hair
+2018/02/10 13:38:43 barber 3 accepts payment
+2018/02/10 13:38:43 barber 3 sleeping
+2018/02/10 13:38:43 customer 22 gets hair cut
+2018/02/10 13:38:43 customer 21 leaves with fresh hair cut
+2018/02/10 13:38:43 customer 22 pays
+2018/02/10 13:38:43 barber 1 cutting hair
+2018/02/10 13:38:43 barber 1 accepts payment
+2018/02/10 13:38:43 barber 1 sleeping
+2018/02/10 13:38:43 customer 22 leaves with fresh hair cut
+----
+
+## buffers.go
+
+Like `5.3-FIFO_barbershop\buffered.go`, I used Go buffered channels for FIFO
+queues.  Here the problem specifies two queues, the couch and the standing
+area.  It was a fun problem.  I'll do the walkthrough.
+
+The problem description mentions the fire code capacity of 20 customers and
+that "a customer will not enter the shop if it is filled to capacity with
+other customers."  Not realistic, in my opinion.  What customer at any
+establishment ever pays attention to the fire code capacity and counts heads
+before entering?  I thought it didn't detract from the problem too much to
+simply limit the size of the standing area.  Another liberty I took possibly
+varying from the intent of the problem was that I didn't model much about
+payment being given to any barber and there being only one cash register.
+It's true that in real life a waiting customer might prefer a certain barber
+and if that barber has just finished a haircut, that the barber might take his
+new customer more quickly if an idle barber handles payment of the previous
+customer, given the reality that paying takes some amount of time.  But
+customer preferences, non-zero payment times, and maximizing the utilization
+of prefered barbers are not specified in the problem description.  It seems
+enough to me to assume that when a barber completes a haircut that he himself
+accepts payment from the customer.  As far as there being only one cash
+register, I considered that modeled sufficiently with the WaitGroup.  I give
+more details on this more below.
+
+At the top of the program then, if three customers can sit in barber chairs and
+four can sit on the couch, 20-3-4 is the capacity of the standing area.  As
+with `5.3-FIFO_barbershop/buffered.go`, I model the barbers with unbuffered
+channels, and now model the couch and standing areas as separate buffered
+channels.
+
+In main(), the WaitGroup is initialized with the total number of customers
+that will arrive during the simulation.  Ultimately this will be the number who
+get haircuts and pay plus the number who find the shop at capacity and leave.
+
+Before starting barber and customer goroutines I start one more goroutine
+that moves customers from the standing queue to the couch queue.  You might
+call this an "usher" like goroutine but I prefer to think of it as modeling
+the standing customers being able to notice that there is room on the couch
+and then taking the action of moving to the couch.  Back where the `standing`
+channel was created, I created it with the size of `standingCap - 1`.  The
+code here shows why.  One standing customer will be in the variable `c` in
+this goroutine.  The variable (or indeed two separate buffered channels) would
+not be needed except that we wish to output a message about the customer moving
+to the couch.
+
+Three barber goroutines are started with IDs so they can be distinguished
+in output messages.  At the beginning of the function we define a function
+literal `cut` called from either of two places (asleep or awake) where the
+barber cuts hair.  In `cut` the call to wg.Done can be considered to model
+serial access to the single cash register.  Any of the three barbers might
+call wg.Done() concurrently but wg.Done() will serialize access to its
+internal counter.
+
+Remaining barber code is similar to that in `5.3-FIFO_barbershop/buffered.go`.
+In the sleeping state, the barber wakes in response to a customer directly
+aproaching him or -- in extremely unlikely circumstances -- sitting on the
+couch just as all three barbers are simultaneously finishing hair cuts.
+In the awake state, the barber only needs to check the couch before sleeping.
+The barber never needs to consider the standing area because the problem
+specifies three barbers and four seats on the couch.  Even in the case of
+three haircuts finishing simultaneously, at most three customers can move
+from the couch to the barber chairs.  For a customer to need to stand the
+instant before this event, there must be one customer left on the couch after
+the event.  Thus if a customer must wait, he will always spend at least some
+time on the couch.
+
+The customer goroutine is likewise similar to that in
+`5.3-FIFO_barbershop/buffered.go`, but a little more elaborate.  In the first
+select, representing the customer's first preference, if a barber is free,
+he goes directly to the barber.  The select statement guarantees that a
+"pseudorandom choice" is made between available barbers.  Otherwise the
+customer attempts to sit on the couch.  If the send blocks, it means the
+couch (buffered channel) is full and the customer can attempt similarly to
+enter the standing queue.  If there is no room there, the customer leaves.
+In this case the code calls wg.Done to count a customer that is not getting
+a haircut.
+
+Back in main(), I start customer goroutines in three stages to simulate
+different levels of business in the shop.  It's interesting because different
+cases of code are exercised.  With business slow, you get to see barbers
+sleeping.  With more business you get to see the couch used, and with the
+shop busy enough, you get to see the standing area fill to capacity and
+customers leave.
+
+The wg.Wait() call allows the program to terminate when the number of "payments
+accepted" plus the number of customers who left upon finding the shop full
+equals the number of customers sent through the simulation.  In the process,
+this demonstrates that all of these calls, including the ones representing
+access to the single cash register, were properly serialized.
+----
+$ go run -race buffers.go
+2018/02/10 15:23:17 barber 1 sleeping
+2018/02/10 15:23:17 barber 2 sleeping
+2018/02/10 15:23:17 (business starts slow)
+2018/02/10 15:23:17 barber 3 sleeping
+2018/02/10 15:23:17 barber 2 wakes and takes customer 1
+2018/02/10 15:23:17 customer 1 arrives and is happy to find a barber free
+2018/02/10 15:23:17 customer 1 pays and leaves
+2018/02/10 15:23:17 barber 2 sleeping
+2018/02/10 15:23:17 customer 2 arrives and is happy to find a barber free
+2018/02/10 15:23:17 barber 2 wakes and takes customer 2
+2018/02/10 15:23:17 customer 2 pays and leaves
+2018/02/10 15:23:17 barber 2 sleeping
+2018/02/10 15:23:17 customer 3 arrives and is happy to find a barber free
+2018/02/10 15:23:17 barber 1 wakes and takes customer 3
+2018/02/10 15:23:17 customer 3 pays and leaves
+2018/02/10 15:23:17 barber 1 sleeping
+2018/02/10 15:23:17 customer 4 arrives and is happy to find a barber free
+2018/02/10 15:23:17 barber 3 wakes and takes customer 4
+2018/02/10 15:23:17 customer 5 arrives and is happy to find a barber free
+2018/02/10 15:23:17 barber 2 wakes and takes customer 5
+2018/02/10 15:23:17 customer 4 pays and leaves
+2018/02/10 15:23:17 barber 3 sleeping
+2018/02/10 15:23:17 customer 5 pays and leaves
+2018/02/10 15:23:17 barber 2 sleeping
+2018/02/10 15:23:18 customer 6 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 1 wakes and takes customer 6
+2018/02/10 15:23:18 (business picks up)
+2018/02/10 15:23:18 customer 7 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 3 wakes and takes customer 7
+2018/02/10 15:23:18 customer 8 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 2 wakes and takes customer 8
+2018/02/10 15:23:18 customer 9 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 6 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 9 from the couch
+2018/02/10 15:23:18 customer 7 pays and leaves
+2018/02/10 15:23:18 barber 3 sleeping
+2018/02/10 15:23:18 customer 10 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 3 wakes and takes customer 10
+2018/02/10 15:23:18 customer 8 pays and leaves
+2018/02/10 15:23:18 barber 2 sleeping
+2018/02/10 15:23:18 customer 11 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 2 wakes and takes customer 11
+2018/02/10 15:23:18 customer 9 pays and leaves
+2018/02/10 15:23:18 barber 1 sleeping
+2018/02/10 15:23:18 customer 12 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 1 wakes and takes customer 12
+2018/02/10 15:23:18 customer 13 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 10 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 13 from the couch
+2018/02/10 15:23:18 customer 11 pays and leaves
+2018/02/10 15:23:18 barber 2 sleeping
+2018/02/10 15:23:18 customer 14 arrives and is happy to find a barber free
+2018/02/10 15:23:18 barber 2 wakes and takes customer 14
+2018/02/10 15:23:18 customer 12 pays and leaves
+2018/02/10 15:23:18 barber 1 sleeping
+2018/02/10 15:23:18 barber 1 wakes and takes customer 15
+2018/02/10 15:23:18 customer 15 arrives and is happy to find a barber free
+2018/02/10 15:23:18 customer 16 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 17 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 13 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 16 from the couch
+2018/02/10 15:23:18 customer 14 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 17 from the couch
+2018/02/10 15:23:18 customer 18 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 15 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 18 from the couch
+2018/02/10 15:23:18 (very busy now)
+2018/02/10 15:23:18 customer 19 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 20 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 21 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 22 arrives and takes a seat on the couch
+2018/02/10 15:23:18 customer 23 arrives and waits standing
+2018/02/10 15:23:18 customer 24 arrives and waits standing
+2018/02/10 15:23:18 customer 16 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 19 from the couch
+2018/02/10 15:23:18 customer 23 takes the free seat on the couch
+2018/02/10 15:23:18 customer 25 arrives and waits standing
+2018/02/10 15:23:18 customer 26 arrives and waits standing
+2018/02/10 15:23:18 customer 27 arrives and waits standing
+2018/02/10 15:23:18 customer 28 arrives and waits standing
+2018/02/10 15:23:18 customer 29 arrives and waits standing
+2018/02/10 15:23:18 customer 30 arrives and waits standing
+2018/02/10 15:23:18 customer 31 arrives and waits standing
+2018/02/10 15:23:18 customer 17 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 20 from the couch
+2018/02/10 15:23:18 customer 24 takes the free seat on the couch
+2018/02/10 15:23:18 customer 32 arrives and waits standing
+2018/02/10 15:23:18 customer 33 arrives and waits standing
+2018/02/10 15:23:18 customer 18 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 21 from the couch
+2018/02/10 15:23:18 customer 25 takes the free seat on the couch
+2018/02/10 15:23:18 customer 34 arrives and waits standing
+2018/02/10 15:23:18 customer 35 arrives and waits standing
+2018/02/10 15:23:18 customer 36 arrives and waits standing
+2018/02/10 15:23:18 customer 37 arrives and waits standing
+2018/02/10 15:23:18 customer 38 arrives and waits standing
+2018/02/10 15:23:18 customer 39 arrives, finds shop full, leaves
+2018/02/10 15:23:18 customer 40 arrives, finds shop full, leaves
+2018/02/10 15:23:18 customer 19 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 22 from the couch
+2018/02/10 15:23:18 customer 26 takes the free seat on the couch
+2018/02/10 15:23:18 customer 21 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 23 from the couch
+2018/02/10 15:23:18 customer 27 takes the free seat on the couch
+2018/02/10 15:23:18 customer 20 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 24 from the couch
+2018/02/10 15:23:18 customer 28 takes the free seat on the couch
+2018/02/10 15:23:18 customer 22 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 25 from the couch
+2018/02/10 15:23:18 customer 29 takes the free seat on the couch
+2018/02/10 15:23:18 customer 24 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 26 from the couch
+2018/02/10 15:23:18 customer 30 takes the free seat on the couch
+2018/02/10 15:23:18 customer 23 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 27 from the couch
+2018/02/10 15:23:18 customer 31 takes the free seat on the couch
+2018/02/10 15:23:18 customer 25 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 28 from the couch
+2018/02/10 15:23:18 customer 32 takes the free seat on the couch
+2018/02/10 15:23:18 customer 27 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 29 from the couch
+2018/02/10 15:23:18 customer 33 takes the free seat on the couch
+2018/02/10 15:23:18 customer 26 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 30 from the couch
+2018/02/10 15:23:18 customer 34 takes the free seat on the couch
+2018/02/10 15:23:18 customer 28 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 31 from the couch
+2018/02/10 15:23:18 customer 35 takes the free seat on the couch
+2018/02/10 15:23:18 customer 29 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 32 from the couch
+2018/02/10 15:23:18 customer 36 takes the free seat on the couch
+2018/02/10 15:23:18 customer 30 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 33 from the couch
+2018/02/10 15:23:18 customer 37 takes the free seat on the couch
+2018/02/10 15:23:18 customer 31 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 34 from the couch
+2018/02/10 15:23:18 customer 38 takes the free seat on the couch
+2018/02/10 15:23:18 customer 32 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 35 from the couch
+2018/02/10 15:23:18 customer 33 pays and leaves
+2018/02/10 15:23:18 barber 2 takes waiting customer 36 from the couch
+2018/02/10 15:23:18 customer 34 pays and leaves
+2018/02/10 15:23:18 barber 3 takes waiting customer 37 from the couch
+2018/02/10 15:23:18 customer 35 pays and leaves
+2018/02/10 15:23:18 barber 1 takes waiting customer 38 from the couch
+2018/02/10 15:23:18 customer 36 pays and leaves
+2018/02/10 15:23:18 barber 2 sleeping
+2018/02/10 15:23:18 customer 37 pays and leaves
+2018/02/10 15:23:18 barber 3 sleeping
+2018/02/10 15:23:18 customer 38 pays and leaves
+2018/02/10 15:23:18 barber 1 sleeping
+----
