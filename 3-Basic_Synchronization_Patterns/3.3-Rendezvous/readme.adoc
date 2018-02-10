@@ -1,6 +1,6 @@
 # 3.3 Rendezvous Pattern
 
-## chanSem.go
+## book.go
 
 A literal implementation of the book's solution using our library semaphore
 implementation.  It's a symmetric solution in that the same function is used
@@ -11,7 +11,7 @@ on WaitGroups later.
 
 ## buffered.go
 
-This is chanSem.go with Go channels replacing the semaphores.  It's easiest
+This is `book.go` with Go channels replacing the semaphores.  It's easiest
 to make the channels buffered in this case, as that's kind of how semaphores
 work.
 

@@ -1,13 +1,13 @@
 # 4.4 Dining philosphers
 
-## chanSem.go
+## book.go
 
-chanSem.go is an implemenation of solution #1.  While the problem is posed as
-if the philosphers wish to eat indefinately, I added a "bite" limit to limit
+`Book.go` is an implemenation of solution #1.  While the problem is posed as
+if the philosphers wish to eat indefinitely, I added a "bite" limit to limit
 the output of the simulation.  Still, a sample run is rather long.
 
 ----
-$ go run chanSem.go
+$ go run book.go
 2018/01/30 19:07:00 philosopher 4 thinking
 2018/01/30 19:07:00 philosopher 2 thinking
 2018/01/30 19:07:00 philosopher 1 thinking

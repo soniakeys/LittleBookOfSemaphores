@@ -16,14 +16,14 @@ arbitrary application-specific task?  Are they just general concepts?
 I'm going to implement them as print statements, just indicating that some
 code is being excecuted.
 
-## chanSem.go
+## book.go
 
 This is the literal interpretation.
 
 Output from an example run:
 
 ----
-$ go run chanSem.go
+$ go run book.go
 2018/01/27 13:23:43 gr 0 rendezvous
 2018/01/27 13:23:43 gr 3 rendezvous
 2018/01/27 13:23:43 gr 2 rendezvous
@@ -52,7 +52,7 @@ ____
 It does seem dangerous.  What does the Go race detector think?
 
 ----
-$ go run -race chanSem.go
+$ go run -race book.go
 2018/01/30 14:59:15 gr 0 rendezvous
 2018/01/30 14:59:15 gr 1 rendezvous
 ==================
@@ -60,20 +60,20 @@ $ go run -race chanSem.go
 WARNING: DATA RACE
 Write at 0x0000005d1140 by goroutine 7:
   main.gr()
-      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:22 +0x166
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/book.go:22 +0x166
 
 Previous read at 0x0000005d1140 by goroutine 6:
   main.gr()
-      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:24 +0x1c4
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/book.go:24 +0x1c4
 
 Goroutine 7 (running) created at:
 2018/01/30 14:59:15 gr 3 rendezvous
   main.main()
-      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:36 +0xa2
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/book.go:36 +0xa2
 
 Goroutine 6 (running) created at:
   main.main()
-      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/chanSem.go:36 +0xa2
+      /home/sonia/go/src/github.com/soniakeys/LittleBookOfSemaphores/3-Basic_Synchronization_Patterns/3.6-Barrier/book.go:36 +0xa2
 ==================
 2018/01/30 14:59:15 gr 4 rendezvous
 2018/01/30 14:59:15 gr 0 critical point

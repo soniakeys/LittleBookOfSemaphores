@@ -4,7 +4,7 @@ Oh, this section seems a mess to me.  The situation first presented is that
 of a barrier inside a loop, but then the whole loop thing is never mentioned
 again.
 
-## chanSem.go
+## book.go
 
 This is the literal implementation of section 3.7.5.
 
@@ -27,7 +27,7 @@ which makes for two phases.  That doesn't seem to solve the loop problem
 in general.
 
 ----
-$ go run -race chanSem.go
+$ go run -race book.go
 2018/01/30 17:06:09 gr 1 rendezvous
 2018/01/30 17:06:09 gr 4 rendezvous
 2018/01/30 17:06:09 gr 3 rendezvous
@@ -76,9 +76,10 @@ a kind of barrier.  They're pretty easy to reason about and use.
 
 ## barrier.go
 
-In mainLoop.go, we dispensed with the channel close idiom even.  Can we revisit
-the original barrier problem and simplify it in the same way?  Barrier.go is
-it.  Just two kinds of work, each using the WaitGroup to signal completion.
+In `mainLoop.go`, we dispensed with the channel close idiom even.  Can we
+revisit the original barrier problem and simplify it in the same way?
+`Barrier.go` is it.  Just two kinds of work, each using the WaitGroup to
+signal completion.
 
 It's starting to feel trivialized though.  What was the big deal in the last
 chapter with the barrier in the worker goroutine?  The missing point is that
@@ -132,7 +133,7 @@ $ go run -race data.go
 ## workerLoop.go
 
 Finally, while the Go solutions described above are simple ways to solve
-this type of problem, workerLoop.go is given as a Go solution more like the
+this type of problem, `workerLoop.go` is given as a Go solution more like the
 two-phase barrier presented in the book.  It implements a two-phase barrier
 within goroutines that are started once and run across all computation cycles
 before terminating.  Workers must be ready to receive and act on two different

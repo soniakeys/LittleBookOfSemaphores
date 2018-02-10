@@ -1,11 +1,11 @@
 # 4.2 Readers-writers
 
-## chanSem.go
+## book.go
 
 First solution from the book:
 
 ----
-$ go run chanSem.go
+$ go run book.go
 2018/01/29 17:41:59 writer 1 writes
 2018/01/29 17:41:59 writer 5 writes
 2018/01/29 17:41:59 writer 2 writes
@@ -23,8 +23,8 @@ $ go run chanSem.go
 ## lightswitch.go
 
 Simplified solution from the book, using the "lightswitch" pattern.
-I implemented Lightswitch as a type in sem.go, in the sem package,
-then used it in this code.  Unsurprisingly, it works just like chanSem.go:
+I implemented Lightswitch as a type in `sem.go`, in the sem package,
+then used it in this code.  Unsurprisingly, it works just like `book.go`:
 
 ----
 $ go run lightswitch.go
@@ -48,9 +48,9 @@ Implemented following the book.  It was interesting to see a little bit
 different behavior in the simulation.  There are no timers or attempts to
 introduce randomness in the program, but the program has some random variation
 from run to run just because of randomness in the scheduler.  So runs have
-some common patterns but some variation.  The common patterns of noStarve.go
-are obviously a little different than the patterns of chanSem.go and
-lightswitch.go
+some common patterns but some variation.  The common patterns of `noStarve.go`
+are obviously a little different than the patterns of `book.go` and
+`lightswitch.go`.
 
 ----
 $ go run noStarve.go
@@ -94,7 +94,7 @@ $ go run wPriority.go
 Finally, the Go solution without semaphores.  Go has a great read-write mutex
 in the sync package of the standard library.  It is documented to have write
 priority.  So somewhat pleasingly, the patterns of output look much like the
-patterns produced by wPriority.go
+patterns produced by `wPriority.go`.
 
 ----
 $ go run rwmutex.go

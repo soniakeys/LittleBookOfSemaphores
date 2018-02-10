@@ -2,7 +2,7 @@
 
 Mutexes, we got.  Anyway, let's play along for a bit.
 
-## chanSem.go
+## book.go
 
 Here's the literal implementation of the solution from the book.  Note the
 semaphore initialized to 1 rather than 0.

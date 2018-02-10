@@ -1,12 +1,12 @@
 # 4.5 Cigarette smokers
 
-## chanSem.go
+## book.go
 
 Literal interpretation, with agents, pushers, and smokers just started from
 function literals.
 
 ----
-$ go run -race chanSem.go
+$ go run -race book.go
 2018/02/04 19:28:24 agent provides tobacco and paper
 2018/02/04 19:28:24 smoker with matches makes cigarette
 2018/02/04 19:28:24 smoker with matches smokes
@@ -110,7 +110,7 @@ $ go run -race watch.go
 ## generalized.go
 
 Again, a pretty literal implementation of the book solution.  It's interesting
-to see that it's a few lines shorter than chanSem.go, in spite of the
+to see that it's a few lines shorter than `book.go`, in spite of the
 suggestion that it's a more difficult problem
 
 ----
@@ -174,7 +174,7 @@ of the new table configuration while still inside the mutex.  This snapshot
 is then broadcast to each of the smokers on their "line of sight" goroutines.
 
 Smoker goroutines in this program run once for the simulation; they are not
-restarted each round as in watch.go.  A little bit of smoker initialization
+restarted each round as in `watch.go`.  A little bit of smoker initialization
 code is to take the item they have and set some variables for the items they
 want.  This allows the same smoker code to serve for all three smokers.
 

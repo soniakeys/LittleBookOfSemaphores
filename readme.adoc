@@ -54,7 +54,7 @@ I try to implement most of Downey's solutions from the book and implement them
 as literally as possible using a semaphore implementation from the sem package.
 The semaphore implementation I currently trust is the one based on Go channels
 and so for most sections the first solution presented is implemented in a Go
-source file called `chanSem.go`.
+source file called `book.go`.
 
 Other implmentations will have somewhate descriptive file names.
 

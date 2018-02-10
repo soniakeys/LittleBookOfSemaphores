@@ -80,7 +80,7 @@ In the sync package of the Go standard library is the WaitGroup type.
 https://golang.org/pkg/sync/#WaitGroup
 
 It allows a goroutine to wait for multiple goroutines to finish doing
-something.  First demonstrated in 3.3-Rendezvous/chanSem.go and buffered.go
+something.  First demonstrated in 3.3-Rendezvous/book.go and buffered.go
 programs, where main starts two goroutines and waits for them to finish.
 Note this wait-to-finish operation is not described in section 3.3 of the
 book.  The book does not describe how the thread code would be incorporated
@@ -99,7 +99,7 @@ output atomicly.  Output to stdout, for example is not generally guaranteed
 by the operating system to be atomic.  Calls to fmt.Print() from separate
 goroutines can actually generate interleaved output.
 
-If 3.3-Rendezvous/chanSem.go, which writes output from two concurrent
+If 3.3-Rendezvous/book.go, which writes output from two concurrent
 goroutines, used fmt.Print, it can occasionally produce output like
 
 ----

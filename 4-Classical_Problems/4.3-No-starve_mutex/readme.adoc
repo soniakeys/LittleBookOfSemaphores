@@ -9,10 +9,10 @@ followed, and show that they are scheduled in some reasonable amount of time
 even while the saturation goroutines were continuing to be started.  It's
 beyond the scope of what I'm trying do do here.
 
-## chanSem.go
+## book.go
 
 ----
-$ go run chanSem.go
+$ go run book.go
 gr 5 runs
 gr 7 runs
 gr 6 runs
@@ -73,7 +73,7 @@ cost to the normal case of I/O-bound goroutines.
 Ian
 ____
 
-The a peek at the comment at the top of runtime/proc.go shows that as of this
+The a peek at the comment at the top of `runtime/proc.go` shows that as of this
 writing, January 2018, the current scheduler is the one described in the cited
 design document, go11sched.
 

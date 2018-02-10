@@ -1,6 +1,6 @@
 # 4.1 Producer-consumer
 
-## chanSem.go
+## book.go
 
 In my semaphor-based implementation, I started with a cut and paste from the
 book solution and tried to modify it minimally.  In my interpretation, I start
@@ -10,7 +10,7 @@ consume from the single buffer.  The print statements are just to make a nice
 simulation.
 
 ----
-$ go run chanSem.go
+$ go run book.go
 2018/01/28 22:47:10 producer 6 produces event 1
 2018/01/28 22:47:10   consumer 2 gets event 1
 2018/01/28 22:47:10     processed: event 1
@@ -65,7 +65,7 @@ $ go run chan.go
 
 ## finiteSem.go
 
-The book solution works as advertised, with the sliding slice buffer replaced
+This book solution works as advertised, with the sliding slice buffer replaced
 by ring buffer:
 
 ----
@@ -93,8 +93,8 @@ $ go run finiteSem.go
 ## finite.go
 
 For the finite buffer we use a Go buffered channel.  The difference from
-chan.go, the "unbounded" solution is subtle.  In chan.go the unbounded part
-is that any number of goroutines can be waiting to send.  Here in finite.go,
+`chan.go`, the "unbounded" solution is subtle.  In `chan.go` the unbounded part
+is that any number of goroutines can be waiting to send.  Here in `finite.go`,
 the buffered channel can handle a number of these goroutines immediately and
 allow them to terminate.
 

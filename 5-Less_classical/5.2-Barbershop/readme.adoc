@@ -86,17 +86,17 @@ $ go run -race mutex.go
 
 ## m2.go
 
-Still a mutex-based version, it's mutex.go with some improvements.
+Still a mutex-based version, it's `mutex.go` with some improvements.
 
 First, in mutex.go, the channel pair `customer` and `barber` is overkill.
 An single unbuffered channel in Go does a rendezvous so the pair can be
 replaced with a single channel.  I called the single channel `barberRoom`
 and had the customer send his customer number on the channel.  It models a
-customer entering the barber room.  Similarly I replaced the mutex.go pair
+customer entering the barber room.  Similarly I replaced the `mutex.go` pair
 `customerDone` and `barberDone` with the single channel `cutDone`.  The
 barber sends a dummy message on this channel to mark the end of the hair cut.
 
-In mutex.go, main() starts all all customer goroutines before falling into
+In `mutex.go`, main() starts all all customer goroutines before falling into
 the barber loop.  The customer goroutines all queue up in order on the mutex
 making for a predictable sequence of events.  In m2, I start a goroutine to
 run the loop of creating customer goroutines.  This allows the barber loop to
@@ -209,7 +209,7 @@ $ go run -race select.go
 
 ## reflect.go
 
-In reflect.go I go to great pains to correct one little deficiency of
+In `reflect.go` I go to great pains to correct one little deficiency of
 `select.go`.  The problem statement starts "A barbershop consists of a waiting
 room with _n_ chairs..." but in `select.go`, there is no _n_.  We hard coded
 three waiting room chairs with various lines of code duplicated three times.
