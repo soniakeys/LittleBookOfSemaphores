@@ -11,21 +11,30 @@ on WaitGroups later.
 
 ## buffered.go
 
-This is `book.go` with Go channels replacing the semaphores.  It's easiest
-to make the channels buffered in this case, as that's kind of how semaphores
-work.
+This is `book.go` with Go channels replacing the semaphores.  Like `book.go`
+this solution is also symmetric and after both goroutines are started, it's
+indeterminate which will send first.  Whichever sends first cannot block
+waiting for the other thread to receive because that other thread will also
+attempt a send before receiving.  Buffered channels allow the sends to be
+non-blocking.  Either can send first but neither can proceed to "statement 2"
+until both have sent.  This accomplishes the rendezvous.
 
 ## chan.go
 
 Finally, "rendezvous" is interpreted variously.  The Ada rendezvous is quite
 elaborate with functionality for example.  Sometimes the term means "each
 thread sends a message, each thread receives a message, and they each wait
-for each other".  But most primitively, it means that each thread must be at
+for each other".  In the book solution and in `buffered.go` it is further
+implimented such that either thread can signal or perform the send first.
+Most primitively however, it means that each thread must be at
 a particular place in it's own code at some same instant, with the first
 thread to arrive waiting for the second.  This is exactly what a Go unbuffered
-send and receive does.  If you don't mind the asymmetry of one goroutine being
-the designated sender and the other being the designated receiver then this
-is a simple rendezvous.
+send and receive does, and it does it with a single channel.  If you don't mind
+the asymmetry of one goroutine being the designated sender and the other being
+the designated receiver then this is a simple rendezvous.
 
-In this sense, that exercise 3.1 was a rendezvous as well.  It's unclear at
-this point what capability this exercise 3.3 is showing that is new.
+Note that the original problem description did not specify anything about how
+the synchronization was to be performed, only that "a1" and "b1" must happen
+before "a2" and "b2".  In other words, there must be some instant when thread A
+execution is at the point between "a1" and "a2" and thread B execution is at
+the point between "b1" and "b2".
