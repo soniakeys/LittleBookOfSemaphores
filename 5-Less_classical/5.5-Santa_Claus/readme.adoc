@@ -1,0 +1,216 @@
+# 5.5 Santa Claus
+
+The book solution didn't seem to work for me.  I forged ahead with my own
+solutions.  I wrote `santa.go` first, implementing what I thought were the
+most interesting parts of the problem and skipping a few parts that I thought
+were trivial.
+
+----
+$ go run santa.go
+2018/02/11 14:06:21 Donner back from tropics
+2018/02/11 14:06:21 Vixen back from tropics
+2018/02/11 14:06:21 elf 722 needs help
+2018/02/11 14:06:21 elf 280 needs help
+2018/02/11 14:06:21 elf 89 needs help
+2018/02/11 14:06:21 elf 89 goes to wake santa
+2018/02/11 14:06:21 Dasher back from tropics
+2018/02/11 14:06:21 Comet back from tropics
+2018/02/11 14:06:21 elf 4846 needs help
+2018/02/11 14:06:21 Blitzen back from tropics
+2018/02/11 14:06:21 Rudolph back from tropics
+2018/02/11 14:06:21 elf 2320 needs help
+2018/02/11 14:06:21 santa helps elves 722, 280, and 89
+2018/02/11 14:06:21 elf 1367 needs help
+2018/02/11 14:06:21 elf 1367 goes to wake santa
+2018/02/11 14:06:21 santa helps elves 4846, 2320, and 1367
+2018/02/11 14:06:21 elf 4049 needs help
+2018/02/11 14:06:21 Dancer back from tropics
+2018/02/11 14:06:21 elf 3687 needs help
+2018/02/11 14:06:21 elf 3015 needs help
+2018/02/11 14:06:21 Prancer back from tropics
+2018/02/11 14:06:21 elf 3015 goes to wake santa
+2018/02/11 14:06:21 santa helps elves 4049, 3687, and 3015
+2018/02/11 14:06:21 elf 4192 needs help
+2018/02/11 14:06:21 Cupid back from tropics
+2018/02/11 14:06:21 Cupid waking santa
+2018/02/11 14:06:21 christmas
+----
+
+## full.go
+
+I was going to stop with `santa.go` but then I felt compelled to write a
+solution with all the little extra details.
+
+Walkthrough:
+
+The program starts with constants for some very fiddly stuff that controls
+how much and what kind of stuff happens in the simulation.  Note the number
+of elves is set just below the race detector limit on number of concurrent
+goroutines.  If you're not concerned about race detection then you can set
+the number of elves much higher.  If you mess with the number of elves
+though you have to mess with all the rest of the constants to keep the
+the program showing interesting behavior.  Then there's a raft of
+synchronization elements as package variables.  I'll describe these variables
+as we run across them in the program.
+
+Main() starts the santa goroutine first.  Simulation messages look best with
+santa starting first.  After starting reindeer and elf goroutines, main waits
+for a signal that everything is ready to go, outputs a message and terminates.
+Main() only simulates a single season.
+
+Santa() is a bigger goroutine so I'll leave it for last.  Skip down to
+reindeerFunc.  It starts with a delay representing the time away on vacation.
+When the reindeer returns, it increments the count of reindeer back from
+vacation, then in a little fluff prints a different message depending on
+the the order of return.  If it's the last reindeer back it notifies Santa,
+sending its name on the channel.
+
+Then regardless of the return order, all reindeer wait for the sleighReady
+signal.  This is a broadcast signal implemented by santa closing the
+sleighReady channel.  Then there's an output message corresponding to the
+"invoke getHitched" additional specification of the problem description.
+Finally `hitched.Done()` tallies that this reindeer is ready (has completed
+all output.)
+
+ElfFunc() runs in an infinite loop.  There can be thousands of these goroutines
+started!  (On a big enough machine, millions.)  I start 8000 because of a
+current race detector limit, but otherwise the constant nElves at the top of
+the file can be bumped way up.
+
+Each iteration starts with a delay represent the time the elf works without
+needing help.  When he needs help, there's a message output, then a count
+incremented.  I thought it okay to allow that elves can divide by 3, when
+reindeer can count to 9.
+
+Every third elf notifies Santa by sending his elf number on a channel.
+(The santa goroutine simply uses this number in an output message.)
+Back at the top of the file, this channel `thirdElfNeedingHelp` is
+created as a buffered channel sized to hold the maximum possible backlog.
+Typically only a tiny bit of this capacity is every used, but the memory needed
+for the channel is not significant.  (Each elf goroutine needs already takes
+a little over 8K bytes.  An extra int64 for every three goroutines won't be
+noticed.)  The use of a fully buffered channel allows the send to succeed
+without blocking in all cases.
+
+In all cases then, each elf needing help queues on send to `elvesNeedHelp`.
+The value sent has both the elf number (used for output) and a channel that
+the elf uses to recognize when Santa is helping him.  The elf waits on this
+channel, then outputs a message corresponding to the additional specification
+that an elf must "invoke getHelp".  There's a delay to model the time it
+takes for the elf to get help, then a WaitGroup Done() to signal the completion
+of this elf getting help.
+
+Okay, how does Santa handle all of these messages from reindeer and elves?
+Skip the `helpElves` function for the moment.  There's a sleeping/awake
+loop much like the ones I implmented for the barbershop problems.  A difference
+is that in both the sleeping phase and the awake loop we need an additional
+select to handle the priorty that reindeer have over elves.  In each of these
+phases, the new select implements a non-blocking receive on `reindeerAllHere`
+which responds to the reindeer if it is present.  The default case of the
+select proceeds only if there is no reindeer.  The code in these default cases
+(in the sleeping and awake phases) contains the selects that are more like the
+selects in barbershop.  That is, in the sleeping phase, this inner select
+blocks, in this case waiting for either a reindeer or an elf.  The inner select
+in the awake phase is a non-blocking receive for elves.  If there are no elves
+the default action is to loop back to the sleeping phase.
+
+HelpElves() outputs some messages.  The output message "Santa help elves..."
+implments the additional specification that Santa must "invoke helpElves".  We
+saw the elves doing their part of this specification earlier.  Also in the code
+here we can see how these messages are output concurrently, as specified.
+Santa signals the three elves individually on their `santaHelping` channels.
+This releases them to output their messages concurrently while Santa is
+outputting his.  The synchronization of the `elvesHelped` WaitGroup ends this
+period where the four (Santa plus three elf) threads are doing concurrent
+tasks.
+
+When a reindeer appears, the santa goroutine drops out of the whole event loop.
+There's just a little synchronization needed to implement the interactions of
+hitching reindeer.  There's an output message, then Santa must signal all
+reindeer that the sleigh is ready.  This is done with the channel close
+broadcast technique.  The zero values sent on the closed channel release all
+reindeer goroutines to output their "getting hitched" messages.  The santa
+goroutine waits for all reindeer with the `hitched`  WaitGroup to send the
+`dashAway` (done) signal to main() to end the simulation.
+
+----
+$ go run full.go
+2018/02/11 17:05:15 Santa sleeping
+2018/02/11 17:05:15 elf 716 needs help
+2018/02/11 17:05:15 elf 4843 needs help
+2018/02/11 17:05:15 elf 4081 needs help
+2018/02/11 17:05:15 elf 4081 goes to wake Santa
+2018/02/11 17:05:15 Santa awakened by elf 4081
+2018/02/11 17:05:15 Santa lets in three elves
+2018/02/11 17:05:15 elf 2292 needs help
+2018/02/11 17:05:15 elf 3053 needs help
+2018/02/11 17:05:15 elf 2992 needs help
+2018/02/11 17:05:15 elf 2992 goes to wake Santa
+2018/02/11 17:05:15 elf 3690 needs help
+2018/02/11 17:05:15 elf 716 getting help
+2018/02/11 17:05:15 Santa helps elves 716, 4843, and 4081
+2018/02/11 17:05:15 elf 4081 getting help
+2018/02/11 17:05:15 elf 4843 getting help
+2018/02/11 17:05:15 elf 1708 needs help
+2018/02/11 17:05:15 elf 1108 needs help
+2018/02/11 17:05:15 elf 1108 goes to wake Santa
+2018/02/11 17:05:15 Santa lets three elves out
+2018/02/11 17:05:15 Santa lets in three elves
+2018/02/11 17:05:15 elf 2292 getting help
+2018/02/11 17:05:15 elf 3053 getting help
+2018/02/11 17:05:15 Santa helps elves 2292, 3053, and 2992
+2018/02/11 17:05:15 elf 2992 getting help
+2018/02/11 17:05:15 Santa lets three elves out
+2018/02/11 17:05:15 Santa lets in three elves
+2018/02/11 17:05:15 elf 3690 getting help
+2018/02/11 17:05:15 elf 1708 getting help
+2018/02/11 17:05:15 Santa helps elves 3690, 1708, and 1108
+2018/02/11 17:05:15 elf 1108 getting help
+2018/02/11 17:05:15 elf 2554 needs help
+2018/02/11 17:05:15 Santa lets three elves out
+2018/02/11 17:05:15 Santa sleeping
+2018/02/11 17:05:15 Blitzen back from tropics
+2018/02/11 17:05:15 Dasher back from tropics
+2018/02/11 17:05:15 Dasher joins Blitzen in warming hut
+2018/02/11 17:05:15 Blitzen waits for others in warming hut
+2018/02/11 17:05:15 Prancer back from tropics
+2018/02/11 17:05:15 Prancer joins others in warming hut
+2018/02/11 17:05:15 Vixen back from tropics
+2018/02/11 17:05:15 Vixen joins others in warming hut
+2018/02/11 17:05:15 elf 3377 needs help
+2018/02/11 17:05:15 Comet back from tropics
+2018/02/11 17:05:15 Comet joins others in warming hut
+2018/02/11 17:05:15 elf 1009 needs help
+2018/02/11 17:05:15 elf 1009 goes to wake Santa
+2018/02/11 17:05:15 Santa awakened by elf 1009
+2018/02/11 17:05:15 Santa lets in three elves
+2018/02/11 17:05:15 Rudolph back from tropics
+2018/02/11 17:05:15 Rudolph joins others in warming hut
+2018/02/11 17:05:15 elf 2554 getting help
+2018/02/11 17:05:15 elf 3377 getting help
+2018/02/11 17:05:15 Santa helps elves 2554, 3377, and 1009
+2018/02/11 17:05:15 elf 1009 getting help
+2018/02/11 17:05:15 elf 6918 needs help
+2018/02/11 17:05:15 Cupid back from tropics
+2018/02/11 17:05:15 Cupid joins others in warming hut
+2018/02/11 17:05:15 elf 5710 needs help
+2018/02/11 17:05:15 Donner back from tropics
+2018/02/11 17:05:15 Donner joins others in warming hut
+2018/02/11 17:05:15 Dancer back from tropics
+2018/02/11 17:05:15 Dancer waking Santa
+2018/02/11 17:05:15 elf 5123 needs help
+2018/02/11 17:05:15 elf 5123 goes to wake Santa
+2018/02/11 17:05:15 Santa lets three elves out
+2018/02/11 17:05:15 Dancer arrives to tell Santa reindeer are all here
+2018/02/11 17:05:15 Santa prepares sleigh
+2018/02/11 17:05:15 Dasher gets hitched to sleigh
+2018/02/11 17:05:15 Dancer gets hitched to sleigh
+2018/02/11 17:05:15 Donner gets hitched to sleigh
+2018/02/11 17:05:15 Cupid gets hitched to sleigh
+2018/02/11 17:05:15 Rudolph gets hitched to sleigh
+2018/02/11 17:05:15 Comet gets hitched to sleigh
+2018/02/11 17:05:15 Vixen gets hitched to sleigh
+2018/02/11 17:05:15 Prancer gets hitched to sleigh
+2018/02/11 17:05:15 Blitzen gets hitched to sleigh
+2018/02/11 17:05:15 Christmas
+----
