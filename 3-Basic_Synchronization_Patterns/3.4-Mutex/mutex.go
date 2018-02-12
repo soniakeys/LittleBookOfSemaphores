@@ -5,9 +5,12 @@ import (
 	"sync"
 )
 
-var count int
+var (
+	count int
+	mutex sync.Mutex
+)
 
-func inc(mutex *sync.Mutex, wg *sync.WaitGroup) {
+func inc(wg *sync.WaitGroup) {
 	mutex.Lock()
 	count++
 	mutex.Unlock()
@@ -15,11 +18,10 @@ func inc(mutex *sync.Mutex, wg *sync.WaitGroup) {
 }
 
 func main() {
-	var mutex sync.Mutex
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go inc(&mutex, &wg)
-	go inc(&mutex, &wg)
+	go inc(&wg)
+	go inc(&wg)
 	wg.Wait()
 	fmt.Println("count:", count)
 }

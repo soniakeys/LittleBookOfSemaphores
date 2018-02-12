@@ -14,23 +14,26 @@ demonstrating initialization of CountSem to something greater than zero.
 
 ## mutex.go
 
-Let's use the Go sync.Mutex.  It's a drop-in for the semaphore, without
-having to think about an initial count value.
+Let's use the Go sync.Mutex.  With an associated count, it's a drop-in for the
+semaphore.  I put the mutex and the count together in a parenthesised
+declaration.  This is a common convention to point out the value that a mutex
+protects.  It is merely a code formatting convention however; putting them
+together creates no programmatic tie between them.
 
 ## buffered.go
 
-This version is a bit of an intellectual exercise but demonstrates how a
-buffered channel can be used as a mutex.  The buffer, `count` here, represents
-a place where a value may or may not be stored.  Go does not have strict
-concepts of ownership in the way Rust does, for example, but a Go program can
-still follow conventions of ownership.  If you follow the convention that
-getting the value from the `count` channel means that you "own" it, then you
-can receive the value from the channel, increment it, and then send it back
-to the channel as a way of relinquishing your ownership of the value.  A
-buffer size of one means there can be only one value.  It is a way to implement
-mutually exclusive access to a value.
+This version is a little exercise in "sharing memory by communicating".
+It demonstrates how a buffered channel can be used as a mutex.  The buffer,
+`count` here, represents a place where a value may or may not be stored.
+Go does not have strict concepts of ownership in the way Rust does, for
+example, but a Go program can still follow conventions of ownership.  If you
+follow the convention that getting the value from the `count` channel means
+that you "own" it, then you can receive the value from the channel, increment
+it, and then send it back to the channel as a way of relinquishing your
+ownership of the value.  A buffer size of one means there can be only one
+value.  It is a way to implement mutually exclusive access to a value.
 
 ## atomic.go
 
 Really though, if you just want to increment a shared count?  sync/atomic is
-the way to go.  No mutex needed.
+the way to go.  No mutex or channel needed.
