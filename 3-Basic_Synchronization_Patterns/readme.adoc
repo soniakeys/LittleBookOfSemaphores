@@ -27,7 +27,7 @@ One thing to remember is that main -- a main() function in a package main --
 is running as a goroutine itself.  If another goroutine is started, then
 there are two goroutines.
 
-In 3.1-Signaling/chan.go for example, only one goroutine is explicitly started
+In `3.1-Signaling/chan.go` for example, only one goroutine is explicitly started
 with a `go` statement; the other goroutine is simply main().
 
 ## Unbuffered channel
@@ -84,7 +84,7 @@ In the sync package of the Go standard library is the WaitGroup type.
 https://golang.org/pkg/sync/#WaitGroup
 
 It allows a goroutine to wait for multiple goroutines to finish doing
-something.  First demonstrated in 3.3-Rendezvous/book.go and buffered.go
+something.  First demonstrated in `3.3-Rendezvous/book.go` and `buffered.go`
 programs, where main starts two goroutines and waits for them to finish.
 Note this wait-to-finish operation is not described in section 3.3 of the
 book.  The book does not describe how the thread code would be incorporated
@@ -103,7 +103,7 @@ output atomicly.  Output to stdout, for example is not generally guaranteed
 by the operating system to be atomic.  Calls to fmt.Print() from separate
 goroutines can actually generate interleaved output.
 
-If 3.3-Rendezvous/book.go, which writes output from two concurrent
+If `3.3-Rendezvous/book.go`, which writes output from two concurrent
 goroutines, used fmt.Print, it can occasionally produce output like
 
 ----
@@ -119,7 +119,7 @@ The use of log.Print guards against this.
 
 https://golang.org/pkg/sync/#Mutex
 
-3.4-Mutex/mutex.go introduced sync.Mutex.
+`3.4-Mutex/mutex.go` introduced sync.Mutex.
 
 ## Buffered channel
 
@@ -130,13 +130,13 @@ them from unbuffered channels.
 
 One is that if the buffer is not full, a send will write its value to the
 channel without blocking.  It does not wait for a receiver.  This property is
-used in 3.3-Rendezvous/buffered.go, for example, to allow goroutines to run
+used in `3.3-Rendezvous/buffered.go`, for example, to allow goroutines to run
 in either order as they execute the line `IArrived <- 1`.  Either goroutine
 can execute this line without waiting for the other goroutine.
 
 Another consideration is that a program can follow conventions to use a
 buffered channel as a way to accept, hold, and then release values.  The
-program 3.4-Mutex/buffered.go shows how a buffered channel (and some
+program `3.4-Mutex/buffered.go` shows how a buffered channel (and some
 convention) can implement mutually exclusive access to a value.
 
 ## Sync/atomic package
@@ -144,7 +144,7 @@ convention) can implement mutually exclusive access to a value.
 https://golang.org/pkg/sync/atomic/
 
 Sync/atomic has a number of highly efficient functions for simple atomic
-changes to single values.  3.4-Mutex/atomic.go uses atomic.AddInt64 for
+changes to single values.  `3.4-Mutex/atomic.go` uses atomic.AddInt64 for
 example, for mutually exclusive access to a variable.
 
 ## Broadcast with close(), "quit" messages
@@ -158,14 +158,14 @@ closed_.  At that point, all goroutines attempting to receive will immediately
 succeed in receiving a zero value.  The effect is that a close() can broadcast
 a signal to any number of goroutines.
 
-3.6-Barrier/close.go uses this technique to implement the barrier described
+`3.6-Barrier/close.go` uses this technique to implement the barrier described
 in the section.
 
 While this broadcast technique is generally useful, a very common Go idiom
 is to use it to broadcast a "quit" message to goroutines as a signal that
 they should terminate gracefully.
 
-3.7-Reusable-barrier/workerLoop.go shows an example of this common idiom.
+`3.7-Reusable-barrier/workerLoop.go` shows an example of this common idiom.
 A select statement is inside of an infinite for loop.  One or more cases of
 the select statement handle messages to do the main work of the goroutine,
 then a case for the quit message causes the goroutine to terminate gracefully.
@@ -177,8 +177,8 @@ https://golang.org/ref/spec#Select_statements
 Select is amazingly useful and powerful.  It allows a goroutine to handle
 different messages without having to know which message will arrive next.
 
-3.7-Reusable-barrier/workerLoop.go for example, shows this very common pattern
-where one message means do some work and another message means quit.
+`3.7-Reusable-barrier/workerLoop.go` for example, shows this very common
+pattern where one message means do some work and another message means quit.
 
 ## Time package
 
@@ -191,7 +191,7 @@ The time package has a few though.  See:
 * https://golang.org/pkg/time/#Timer
 
 These are useful in constructing some of the simulations of this repo.
-3.8-Queue/dance.go for example uses time.After to simulate dancers arriving
+`3.8-Queue/dance.go` for example uses time.After to simulate dancers arriving
 at random intervals.
 
 ## All channels have unbounded queues
@@ -201,13 +201,13 @@ because they allow memory or resources to be exhausted, often with catastrophic
 or unforseen consequenses.  Go channels however, all maintain (internally)
 queues of blocked goroutines, and these queues are unbounded.
 
-4.1-Producer-consumer/chan.go for example uses these queues.  Nothing in the
+`4.1-Producer-consumer/chan.go` for example uses these queues.  Nothing in the
 program implements any queue directly.  The "queue" channel created is
 unbuffered, with no inherent capacity to hold data values, yet the multiple
 producer and consumer goroutines created will queue up as they block, waiting
 for access.
 
-Even 4.1-Producer-consumer/finite.go uses these queues.  The queue channel is
+Even `4.1-Producer-consumer/finite.go` uses these queues.  The queue channel is
 created with capacity 3, yet 6 producers are started.  It is possible that 3
 of the producers will complete channel sends while the other 3 queue up before
 the consumers get around to receiving values.
@@ -221,7 +221,7 @@ roughly the number of sends you expect to be queued.
 
 https://golang.org/pkg/sync/#RWMutex
 
-Used in 4.2-Readers-writers/rwmutex.go
+Used in `4.2-Readers-writers/rwmutex.go`
 
 ## Range over a channel
 
@@ -231,4 +231,4 @@ Used in 4.2-Readers-writers/rwmutex.go
 Read down to the parts about channels.  This is a great compact syntax for
 iterating over values received from a channel.  Iteration ends when the channel
 is closed and all previously sent values have been received.  See use in
-4.5-Cigarette_smokers/table.go.
+`4.5-Cigarette_smokers/table.go`.
