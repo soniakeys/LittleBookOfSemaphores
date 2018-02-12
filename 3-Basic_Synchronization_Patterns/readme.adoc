@@ -56,22 +56,26 @@ complex data.
 
 ### Synchronization
 
-3.1-Signaling/chan.go uses a channel only for synchronizaton.  The channel
+`3.1-Signaling/chan.go` uses a channel only for synchronizaton.  The channel
 type is arbitrary and so is just something simple, an int, and the value
 sent is a dummy value.  The receiving goroutine never even looks at the value.
 
 ### Communication
 
-3.1-Signaling/communicate.go is a variation of chan.go demonstrating how a
-channel send can both synchronize and communicate.
+`3.4-Mutex/mutex.go` uses a mutex to protect a shared variable `count`.
 
-Using channels to both synchronize and communicate is highly recommended.
 A highly repeated quote from required reading
 https://golang.org/doc/effective_go.html[Effective Go] is
 
 ____
 https://golang.org/doc/effective_go.html#sharing[Do not communicate by sharing memory; instead, share memory by communicating.]
 ____
+
+The version `3.4-Mutex\buffered.go` in contrast, uses a buffered channel to
+replace both the mutex and the `count` variable, leaving no shared package
+variable.  The channel send both synchronizes and communicates.
+Using channels to both synchronize and communicate is highly recommended
+to clarify and simplify concurrent code.
 
 ## WaitGroup
 
