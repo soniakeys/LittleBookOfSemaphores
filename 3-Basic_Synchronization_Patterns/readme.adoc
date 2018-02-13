@@ -109,8 +109,8 @@ goroutines, used fmt.Print, it can occasionally produce output like
 ----
 statement a1
 statement b1
-statemstatement b1
-ent a1
+statemstatement b2
+ent a2
 ----
 
 The use of log.Print guards against this.
@@ -147,28 +147,33 @@ Sync/atomic has a number of highly efficient functions for simple atomic
 changes to single values.  `3.4-Mutex/atomic.go` uses atomic.AddInt64 for
 example, for mutually exclusive access to a variable.
 
-## Broadcast with close(), "quit" messages
+## Close()
 
 https://golang.org/ref/spec#Close
 
-Read the part about zero values.  A go idiom is to create a channel with a
-dummy type and never send any values to it.  Multiple goroutines can attempt
-to receive from the channel and all attempts will block _until the channel is
-closed_.  At that point, all goroutines attempting to receive will immediately
-succeed in receiving a zero value.  The effect is that a close() can broadcast
-a signal to any number of goroutines.
+Read the part about zero values.
+
+### Broadcast
+
+A go broadcast idiom involves creating a channel with a dummy type and never
+sending any values to it.  Multiple goroutines can attempt to receive from the
+channel and all attempts will block _until the channel is closed_.  At that
+point, all goroutines attempting to receive will immediately succeed in
+receiving a zero value.  The effect is that a close() can broadcast a signal
+to any number of goroutines.
 
 `3.6-Barrier/close.go` uses this technique to implement the barrier described
 in the section.
 
-While this broadcast technique is generally useful, a very common Go idiom
-is to use it to broadcast a "quit" message to goroutines as a signal that
-they should terminate gracefully.
+### Range over a channel
 
-`3.7-Reusable-barrier/workerLoop.go` shows an example of this common idiom.
-A select statement is inside of an infinite for loop.  One or more cases of
-the select statement handle messages to do the main work of the goroutine,
-then a case for the quit message causes the goroutine to terminate gracefully.
+* https://golang.org/ref/spec#For_statements
+* https://golang.org/ref/spec#For_range
+
+Read down to the parts about channels.  This is a great compact syntax for
+iterating over values received from a channel.  Iteration ends when the channel
+is closed and all previously sent values have been received.  See use in
+`4.5-Cigarette_smokers/table.go`.
 
 ## Select
 
@@ -177,13 +182,23 @@ https://golang.org/ref/spec#Select_statements
 Select is amazingly useful and powerful.  It allows a goroutine to handle
 different messages without having to know which message will arrive next.
 
-`3.7-Reusable-barrier/workerLoop.go` for example, shows this very common
-pattern where one message means do some work and another message means quit.
+### "Quit" or "cancel" messages
+
+While the channel close broadcast technique just described is generally useful,
+a very common Go idiom closes a channel to broadcast a "quit" or "cancel"
+message to goroutines as signal that they should stop what they are doing and
+terminate gracefully.  This message is typically received in a select
+statement, which is typically in loop.
+
+`3.7-Reusable-barrier/workerLoop.go` shows an example of this common idiom.
+A select statement is inside of an infinite for loop.  There, the worker
+goroutine gr has one select case driving the main work of the goroutine,
+then a case for the quit message causes the goroutine to terminate gracefully.
 
 ## Time package
 
 The Go standard library has very few places where the API uses a channel.
-The time package has a few though.  See:
+The time package has some though.  See:
 
 * https://golang.org/pkg/time/#After
 * https://golang.org/pkg/time/#Tick
@@ -198,7 +213,7 @@ at random intervals.
 
 Commonly quoted is that unbounded queues or other data structures are trouble
 because they allow memory or resources to be exhausted, often with catastrophic
-or unforseen consequenses.  Go channels however, all maintain (internally)
+or unforseen consequenses.  Go channels however, all maintain (internal)
 queues of blocked goroutines, and these queues are unbounded.
 
 `4.1-Producer-consumer/chan.go` for example uses these queues.  Nothing in the
@@ -209,7 +224,7 @@ for access.
 
 Even `4.1-Producer-consumer/finite.go` uses these queues.  The queue channel is
 created with capacity 3, yet 6 producers are started.  It is possible that 3
-of the producers will complete channel sends while the other 3 queue up before
+of the producers will complete channel sends and the other 3 queue up before
 the consumers get around to receiving values.
 
 In general, channel values will take much less memory than waiting goroutines.
@@ -222,13 +237,3 @@ roughly the number of sends you expect to be queued.
 https://golang.org/pkg/sync/#RWMutex
 
 Used in `4.2-Readers-writers/rwmutex.go`
-
-## Range over a channel
-
-* https://golang.org/ref/spec#For_statements
-* https://golang.org/ref/spec#For_range
-
-Read down to the parts about channels.  This is a great compact syntax for
-iterating over values received from a channel.  Iteration ends when the channel
-is closed and all previously sent values have been received.  See use in
-`4.5-Cigarette_smokers/table.go`.
