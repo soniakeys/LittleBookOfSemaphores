@@ -173,7 +173,17 @@ in the section.
 Read down to the parts about channels.  This is a great compact syntax for
 iterating over values received from a channel.  Iteration ends when the channel
 is closed and all previously sent values have been received.  See use in
-`4.5-Cigarette_smokers/table.go`.
+`4.5-Cigarette_smokers/table.go` and read more in
+`4.5-Cigarette_smokers/readme.adoc`, especially the last paragraph under
+`table.go`.
+
+An good principle to follow with range-over-a-channel is that only the
+goroutine that sends on the range channel should close it.  Typically one
+goroutine, say P, acts as a producer, sending vaues on the channel, and one
+(or more!) goroutines will act as (a) consumer(s), taking values from the
+channel.  Goroutine P is the one that knows when it is done producing and has
+sent the last value.  Only goroutine P should close the channel.  That's
+typical anyway.  If you're trying anthing else you might be being too tricky.
 
 ## Select
 
