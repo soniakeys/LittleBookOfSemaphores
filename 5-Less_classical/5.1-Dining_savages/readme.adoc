@@ -55,8 +55,8 @@ wait quietly for a turn at the pot.
 
 This also clarifies that it's okay to let the cook fill the pot.  The mutex
 isn't on the pot, it's on this head-of-line position where a savage can engage
-the cook.  It's the synchronization of `emptyPot` and `fullPot` that prevent
-any race between the savage and the cook in accessing the pot.
+the cook.  Aside from that, it's the synchronization of `emptyPot` and `fullPot`
+that prevents any race between the savage and the cook in accessing the pot.
 
 I gave these elements the more verbose names `seeEmptyPotWakeCook` and
 `seeFullPotCookSleeps`.  I added "see" to reflect that these model the savage

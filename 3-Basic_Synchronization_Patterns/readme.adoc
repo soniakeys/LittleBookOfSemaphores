@@ -77,6 +77,20 @@ variable.  The channel send both synchronizes and communicates.
 Using channels to both synchronize and communicate is highly recommended
 to clarify and simplify concurrent code.
 
+### Channel of channels
+
+You can create a channel of any data type, including a channel type.
+
+A Channel of channels is useful for implementing callback-like semantics.
+One goroutine makes a channel and then sends that channel to another.  That
+other goroutine can receive the channel, then used the sent channel to send
+a message back to the first goroutine.
+
+See this in `5.1-Dining_savages/atomic.go` where the savage goroutines make
+and send channels to the main goroutine when the savages wait for the pot
+to be refilled.  The main goroutine returns a notification on each sent channel
+to simulate the waiting savages "seeing" when the pot has been refilled.
+
 ## WaitGroup
 
 In the sync package of the Go standard library is the WaitGroup type.
