@@ -119,7 +119,9 @@ The use of log.Print guards against this.
 
 https://golang.org/pkg/sync/#Mutex
 
-`3.4-Mutex/mutex.go` introduced sync.Mutex.
+In the common case where a mutex "protects" one or more variables, a common
+code formatting convention is to put the mutex and the variables it protects
+in a parenthesized declaration, as shown near the top of `3.4-Mutex/mutex.go`.
 
 ## Buffered channel
 
