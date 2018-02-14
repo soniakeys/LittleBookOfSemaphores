@@ -61,7 +61,7 @@ const nRounds = 20
 func main() {
 	var rc [3]chan table
 	for i := range rc {
-		rc[i] = make(chan table)
+		rc[i] = make(chan table) // create "report" channels
 		go smoker(item(i), rc[i])
 	}
 	for r := 0; r < nRounds; r++ {
@@ -73,11 +73,11 @@ func main() {
 		tr := t
 		m.Unlock()
 		for _, ch := range rc {
-			ch <- tr
+			ch <- tr // send "table report" to smokers
 		}
 	}
 	wg.Add(3)
-	for _, ch := range rc {
+	for _, ch := range rc { // close "report" channels
 		close(ch)
 	}
 	wg.Wait()

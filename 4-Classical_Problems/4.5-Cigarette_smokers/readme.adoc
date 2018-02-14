@@ -196,6 +196,24 @@ is done with the WaitGroup, then the goroutine terminates.  The main goroutine
 code waits for all smoker goroutines to report done, thus ensuring all output
 is complete before finally terminating the simulation.
 
+The above is a fairly complete walkthrough, but here is a review of just the
+range-over-a-channel technique used in the program:  A channel is created for
+each smoker, representing what his eyes "report" to him about what is on the
+table.  The line of code that creates these channels is near the top of main()
+and is commented 'create "report" channels'.  As items are dealt, these
+channels are used to send a "table report" to each smoker.  This line is also
+in main(), near the middle and commented 'send "table report"'.  The `for`
+statement ranging over the channels is in the the smoker goroutine.  Well, it
+doesn't need a comment; it's the `for` statement.  On each iteration, `r` gets
+a single value from the channel and the code inside the loop does something
+with it.  Loop variable `r` gets reports from main() as long as main sends
+them.  When main, er, the dealer, has dealt all rounds though, it drops down
+to that last loop near the end of main(), where it closes the "report"
+channels.  Back in the smoker goroutines, a smoker will continue to read any
+unread table reports -- and perhaps interact with the table and smoke -- until
+he has read all table reports sent to him.  At that point the `for` statement
+detects that the channel is closed and the loop terminates.
+
 ----
 $ go run -race table.go
 2018/02/05 18:41:47 dealer puts matches (p t m: 0 0 1)
