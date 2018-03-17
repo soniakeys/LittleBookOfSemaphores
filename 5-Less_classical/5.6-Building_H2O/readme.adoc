@@ -1,0 +1,80 @@
+= Building H₂O
+
+== book.go
+
+It works as advertised:
+
+----
+$ go run book.go
+2018/03/17 17:19:45 oxygen count to 1
+2018/03/17 17:19:45 hydrogen count to 1
+2018/03/17 17:19:45 hydrogen count to 2
+2018/03/17 17:19:45 H bonds
+2018/03/17 17:19:45 O bonds
+2018/03/17 17:19:45 H bonds
+2018/03/17 17:19:45 hydrogen count to 1
+2018/03/17 17:19:45 hydrogen count to 2
+2018/03/17 17:19:45 hydrogen count to 3
+2018/03/17 17:19:45 oxygen count to 1
+2018/03/17 17:19:45 O bonds
+2018/03/17 17:19:45 H bonds
+2018/03/17 17:19:45 H bonds
+2018/03/17 17:19:45 oxygen count to 1
+2018/03/17 17:19:45 hydrogen count to 2
+2018/03/17 17:19:45 H bonds
+2018/03/17 17:19:45 O bonds
+2018/03/17 17:19:45 H bonds
+----
+
+== medium.go
+
+If you read the problem as requiring stuff about threads and barriers then
+this program doesn't address the problem.  But the problem statement kind of
+bothered me because it seemed so far from the reality of building H₂O.  In
+reality, reactants are spatially distributed in what I'll call a "medium", and
+they only react with their neighbors in the medium.  This program simulates
+such a medium, and allows concurrent reactions within the medium.  Of course
+it glosses over most everything else, but well, it's fun.
+
+First gloss: one dimension instead of three.  My medium is a Go slice holding
+a linear sequence of H and O atoms.  (Atoms/molecules, another gloss.)  To
+handle atoms reacting with neighbors, I make O atoms work like dining
+philosophers that must pick up a fork (H) on either side of them. I model H
+then as a buffered channel that can dispense a single H atom to whatever O
+grabs it first.  If an O grabs one H but cannot grab the other, it must
+release the first.  H is represented in the medium as these channels.
+Nothing is really needed to represent O except a place holder to distinguish
+it from H.  Nil works fine.
+
+The program initializes the medium with initial quantities of reactants and
+enters a loop to react until the medium is empty.  So also not quite like
+reality, the simulation proceeds in steps, doing a number of concurrent
+reactions each time through the loop.  On each iteration, the reactants are
+first shuffled to order them randomly, then a goroutine is started for each O
+atom in the medium.  The goroutines concurrently try to grab an H on either
+side of them.  If they succeed, they send their position in the medium, the
+bonding site, on a channel for the simulator.  When all O atoms have either
+succeeded or failed to bond, the simulator takes over, removing the bonded
+molecules from the medium, and then iterating in the loop.
+
+----
+$ go run medium.go
+O O H O H O O H H H H H H O H H H O O H O H H O H H H H H H 
+bonding at 23
+bonding at 13
+bonding at 20
+bonding at 3
+O H H O H H O H O H H O H H O H H H 
+bonding at 14
+bonding at 6
+bonding at 3
+bonding at 11
+O H H O H H 
+bonding at 3
+O H H 
+H H O 
+O H H 
+H H O 
+H O H 
+bonding at 1
+----
