@@ -104,7 +104,7 @@ type Barrier struct {
 	mutex, turnstile, turnstile2 ChanSem
 }
 
-func newBarrier(n int) *Barrier {
+func NewBarrier(n int) *Barrier {
 	return &Barrier{
 		n:          n,
 		count:      0,
