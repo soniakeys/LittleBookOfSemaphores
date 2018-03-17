@@ -216,6 +216,15 @@ message to goroutines as signal that they should stop what they are doing and
 terminate gracefully.  This message is typically received in a select
 statement, which is typically in loop.
 
+### Cascade selects to prioritize channels
+
+A select can have a number of communication cases.  Specifications on your
+code may be that following one of these communication cases, you need to
+handle somewhat different cases or handle them in a somewhat different way.
+A technique that is not too tricky and often solves the problem it to just
+tack on another select that reflects the new priorities.
+
+5.2-Barbershop
 `3.7-Reusable-barrier/workerLoop.go` shows an example of this common idiom.
 A select statement is inside of an infinite for loop.  There, the worker
 goroutine gr has one select case driving the main work of the goroutine,
