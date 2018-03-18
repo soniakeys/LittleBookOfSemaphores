@@ -1,0 +1,41 @@
+= 5.7 River crossing
+
+== book.go
+
+----
+$ go run book.go
+2018/03/17 20:19:26 serf boards
+2018/03/17 20:19:26 serf boards
+2018/03/17 20:19:26 serf boards
+2018/03/17 20:19:26 serf boards
+2018/03/17 20:19:26 serf rows
+2018/03/17 20:19:26 hacker boards
+2018/03/17 20:19:26 hacker boards
+2018/03/17 20:19:26 hacker boards
+2018/03/17 20:19:26 hacker boards
+2018/03/17 20:19:26 hacker rows
+2018/03/17 20:19:26 serf boards
+2018/03/17 20:19:26 hacker boards
+2018/03/17 20:19:26 hacker boards
+2018/03/17 20:19:26 serf boards
+2018/03/17 20:19:26 serf rows
+----
+
+== one.go
+
+I don't see concurrency here.  The decision about crossing is made by the
+most recent arrival.
+
+----
+$ go run one.go
+2 hackers, 2 serfs cross
+4 hackers cross
+4 serfs cross
+2 hackers, 2 serfs cross
+2 hackers, 2 serfs cross
+2 hackers, 2 serfs cross
+4 serfs cross
+4 hackers cross
+2 hackers, 2 serfs cross
+2 hackers, 2 serfs cross
+----
