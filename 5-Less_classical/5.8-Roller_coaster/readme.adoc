@@ -1,0 +1,180 @@
+= 5.8 Roller coaster
+
+== book.go
+
+----
+$ go run book.go
+2018/03/17 22:28:41 car ready to load
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 car runs
+2018/03/17 22:28:41 car ready to unload
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 car ready to load
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 car runs
+2018/03/17 22:28:41 car ready to unload
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 car ready to load
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 passenger boards
+2018/03/17 22:28:41 car runs
+2018/03/17 22:28:41 car ready to unload
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+2018/03/17 22:28:41 passenger unboards
+----
+
+== chan.go
+
+----
+$ go run chan.go
+2018/03/17 22:30:10 car ready to load
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 car runs
+2018/03/17 22:30:10 car ready to unload
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 car ready to load
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 car runs
+2018/03/17 22:30:10 car ready to unload
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 car ready to load
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 passenger boards
+2018/03/17 22:30:10 car runs
+2018/03/17 22:30:10 car ready to unload
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+2018/03/17 22:30:10 passenger unboards
+----
+
+= 5.8.3 Multi-car roller coaster
+
+== book-multi.go
+
+The code has a little problem.  As seen in the last run, a car can begin
+running before all of the passengers have unboarded the previous car!
+
+----
+$ go run book-multi.go
+2018/03/17 21:26:23 car 0 ready to load
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 car 0 runs
+2018/03/17 21:26:23 car 0 ready to unload
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 car 1 ready to load
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 car 1 runs
+2018/03/17 21:26:23 car 1 ready to unload
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 car 2 ready to load
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 car 2 runs
+2018/03/17 21:26:23 car 2 ready to unload
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 car 0 ready to load
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger boards
+2018/03/17 21:26:23 car 0 runs
+2018/03/17 21:26:23 car 1 ready to load
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 car 0 ready to unload
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+2018/03/17 21:26:23 passenger unboards
+----
+
+== chan-multi.go
+
+This solution has a platform that holds up to m cars as well as a track that
+holds up to m cars.  Each is modeled with a buffered channel of capacity m.
+One car can be loading at a time, one car can be unloading at a time, the
+loading and unloading can be concurrent.
+
+----
+$ go run chan-multi.go
+2018/03/17 22:18:39 car 0 ready to load
+2018/03/17 22:18:39 passenger boards car 0
+2018/03/17 22:18:39 passenger boards car 0
+2018/03/17 22:18:39 passenger boards car 0
+2018/03/17 22:18:39 passenger boards car 0
+2018/03/17 22:18:39 car 0 runs
+2018/03/17 22:18:39 car 1 ready to load
+2018/03/17 22:18:39 passenger boards car 1
+2018/03/17 22:18:39 car 0 ready to unload
+2018/03/17 22:18:39 passenger unboards car 0
+2018/03/17 22:18:39 passenger boards car 1
+2018/03/17 22:18:39 passenger boards car 1
+2018/03/17 22:18:39 passenger boards car 1
+2018/03/17 22:18:39 car 1 runs
+2018/03/17 22:18:39 car 2 ready to load
+2018/03/17 22:18:39 passenger unboards car 0
+2018/03/17 22:18:39 passenger boards car 2
+2018/03/17 22:18:39 passenger boards car 2
+2018/03/17 22:18:39 passenger unboards car 0
+2018/03/17 22:18:39 passenger boards car 2
+2018/03/17 22:18:39 passenger boards car 2
+2018/03/17 22:18:39 car 2 runs
+2018/03/17 22:18:39 passenger unboards car 0
+2018/03/17 22:18:39 car 1 ready to unload
+2018/03/17 22:18:39 passenger unboards car 1
+2018/03/17 22:18:39 car 0 ready to load
+2018/03/17 22:18:39 passenger unboards car 1
+2018/03/17 22:18:39 passenger unboards car 1
+2018/03/17 22:18:39 passenger unboards car 1
+2018/03/17 22:18:39 car 2 ready to unload
+2018/03/17 22:18:39 passenger unboards car 2
+2018/03/17 22:18:39 passenger unboards car 2
+2018/03/17 22:18:39 passenger unboards car 2
+2018/03/17 22:18:39 passenger unboards car 2
+----
